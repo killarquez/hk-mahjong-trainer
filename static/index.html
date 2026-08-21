@@ -19,7 +19,7 @@
         <span class="brand-icon">🀄</span>
         <div class="brand-titles">
           <h1>Hong Kong Mahjong Efficiency Trainer</h1>
-          <div class="brand-subtitle">TVB LA Championship 2026 Rules • 1-Fan Minimum • Zero Flowers • v2.0.16</div>
+          <div class="brand-subtitle">TVB LA Championship 2026 Rules • 1-Fan Minimum • Zero Flowers • v3.0.0 (Tournament Master Edition)</div>
         </div>
       </div>
 
@@ -42,14 +42,14 @@
     </div>
   </header>
 
-  <!-- Nav Tabs -->
+  <!-- Nav Tabs (4 Primary Functional Hubs) -->
   <nav class="tab-nav">
-    <button class="tab-btn active" data-tab="tab-home">🏠 Home Portal</button>
+    <button class="tab-btn active" data-tab="tab-home">🏠 Home Hub</button>
     <button class="tab-btn" data-tab="tab-trainer">🎯 Discard Trainer</button>
-    <button class="tab-btn" data-tab="tab-bots">🤖 Play vs AI Bots</button>
+    <button class="tab-btn" data-tab="tab-bots">🤖 4-Player Bot Arena</button>
     <button class="tab-btn" data-tab="tab-puzzles">🧩 Tactical Puzzles</button>
-    <button class="tab-btn" data-tab="tab-builder">✏️ Hand Builder</button>
     <button class="tab-btn" data-tab="tab-defense">🛡️ Defense Center</button>
+    <button class="tab-btn" data-tab="tab-builder">✏️ Hand Builder</button>
     <button class="tab-btn" data-tab="tab-fan">🧮 Fan Master & Quiz</button>
     <button class="tab-btn" data-tab="tab-rules">📜 TVB Rules</button>
   </nav>
@@ -313,28 +313,72 @@
             </select>
           </div>
 
+          <div class="select-group">
+            <label for="select-trainer-mode">Training Mode (模式):</label>
+            <select id="select-trainer-mode">
+              <option value="blind">🙈 Tournament Blind Mode (大賽盲打)</option>
+              <option value="assisted">👁️ Live Hint Mode (實時牌效提示)</option>
+            </select>
+          </div>
+
+          <div class="select-group">
+            <label for="select-shot-clock">⏱️ Shot Clock (倒數):</label>
+            <select id="select-shot-clock">
+              <option value="0">Off (無限制)</option>
+              <option value="10">10s (Tournament Standard)</option>
+              <option value="5">5s (Blitz Speed)</option>
+            </select>
+          </div>
+
+          <div class="select-group">
+            <label for="select-trainer-category">🎯 Hand Filter (牌型特訓):</label>
+            <select id="select-trainer-category">
+              <option value="all">🎲 All Hands (標準隨機)</option>
+              <option value="multi_sided_waits">🎯 Multi-Sided Waits (多面聽牌型)</option>
+              <option value="one_fan_pivots">🚫 1-Fan Pivot & Chicken Traps (起胡條件抉擇)</option>
+              <option value="flush_discards">⚡ Flush Optimization (清混一色牌型)</option>
+              <option value="opening_discards">🀄 Opening Turn Discards (開局第一張)</option>
+            </select>
+          </div>
+
           <div class="select-group" style="cursor:pointer;">
             <input type="checkbox" id="toggle-continuous" checked />
-            <label for="toggle-continuous" style="cursor:pointer;">Continuous Practice (連打模式)</label>
+            <label for="toggle-continuous" style="cursor:pointer;">Continuous (連打)</label>
           </div>
         </div>
 
         <div class="action-buttons">
-          <button id="btn-deal-random" class="btn btn-primary">🎲 Deal Random Hand</button>
+          <button id="btn-deal-random" class="btn btn-primary">🎲 Deal Next Hand (發牌)</button>
         </div>
       </div>
 
       <!-- Hand Section -->
       <div class="hand-section">
+        <!-- Shot Clock Countdown Bar -->
+        <div id="shot-clock-bar-container" style="display:none; margin-bottom:12px; background:rgba(0,0,0,0.35); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; margin-bottom:6px;">
+            <span style="color:var(--accent-gold); font-weight:800; font-family:var(--font-mono);">
+              ⏱️ Turn Shot Clock: <span id="shot-clock-num" style="font-size:1.1rem; color:var(--accent-emerald);">10</span>s
+            </span>
+            <span id="shot-clock-status" style="color:#94a3b8; font-size:0.8rem;">Pick your discard before the buzzer!</span>
+          </div>
+          <div style="height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden;">
+            <div id="shot-clock-progress" style="width:100%; height:100%; background:var(--accent-emerald); transition:width 1s linear, background 0.3s ease;"></div>
+          </div>
+        </div>
+
         <div class="hand-header">
-          <div class="hand-title">🀄 Your 14-Tile Hand (Click any tile or press 1-9/0/-/=/q/w to discard):</div>
-          <div class="hand-tip">Optimal discard maximizes Ukeire Outs for lowest Shanten</div>
+          <div class="hand-title">🀄 Your Hand (Click tile or press 1-9/0/-/=/q/w to discard):</div>
+          <div id="trainer-mode-hint" class="hand-tip">🙈 Blind Mode Active: Make your decision; grade & matrix reveal after discard</div>
         </div>
 
         <div id="hand-tiles-rack" class="hand-tiles-rack">
           <div style="color:var(--text-muted); padding:20px;">Dealing initial hand from 136-tile wall...</div>
         </div>
       </div>
+
+      <!-- Post-Discard Performance Grading Card -->
+      <div id="trainer-grading-card" style="display:none; margin-bottom:16px;"></div>
 
       <!-- Feedback & Math Comparison Box -->
       <div id="feedback-box" class="feedback-box" style="display:none;"></div>
@@ -484,7 +528,15 @@
             </span>
           </div>
 
-          <div style="display:flex; gap:10px; align-items:center;">
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <!-- Speed Selector -->
+            <div class="bot-speed-selector" style="display:flex; align-items:center; gap:4px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:3px 6px;">
+              <span style="font-size:0.75rem; color:var(--accent-gold); font-weight:700; margin-right:2px;">⚡ Speed:</span>
+              <button class="btn btn-secondary btn-bot-speed active" data-speed="600" style="padding:2px 6px; font-size:0.72rem;">Normal (600ms)</button>
+              <button class="btn btn-secondary btn-bot-speed" data-speed="200" style="padding:2px 6px; font-size:0.72rem;">Fast (200ms)</button>
+              <button class="btn btn-secondary btn-bot-speed" data-speed="50" style="padding:2px 6px; font-size:0.72rem;">🚀 Turbo (50ms)</button>
+            </div>
+
             <button id="btn-toggle-bot-hud" class="btn btn-secondary" style="font-size:0.8rem; padding:6px 12px;">
               👁️ Efficiency HUD: <span id="hud-toggle-text" style="color:#60a5fa; font-weight:700;">ON</span>
             </button>
@@ -748,10 +800,29 @@
         </div>
       </div>
 
+      <!-- Exposed Melds Builder Rack -->
+      <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:12px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+          <div>
+            <strong style="color:var(--accent-gold); font-size:0.9rem;">🀄 Exposed Melds (副露副子 / 吃碰槓):</strong>
+            <span id="builder-melds-count" style="color:#94a3b8; font-size:0.8rem; margin-left:6px;">0 Melds (0 Tiles)</span>
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button id="btn-builder-add-chow" class="btn btn-secondary" style="padding:3px 8px; font-size:0.75rem;">+ Add Chow (吃)</button>
+            <button id="btn-builder-add-pong" class="btn btn-secondary" style="padding:3px 8px; font-size:0.75rem;">+ Add Pong (碰)</button>
+            <button id="btn-builder-add-kong" class="btn btn-secondary" style="padding:3px 8px; font-size:0.75rem;">+ Add Kong (槓)</button>
+            <button id="btn-builder-clear-melds" class="btn btn-secondary" style="padding:3px 8px; font-size:0.75rem; color:#fca5a5;">Clear Melds (清空副露)</button>
+          </div>
+        </div>
+        <div id="builder-melds-list" style="display:flex; gap:12px; flex-wrap:wrap; min-height:40px; align-items:center;">
+          <span style="color:var(--text-muted); font-size:0.8rem;">No exposed melds (all 14 tiles concealed). Click buttons above to add open Chows, Pongs, or Kongs.</span>
+        </div>
+      </div>
+
       <!-- Builder Tile Rack -->
       <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
         <div>
-          <strong>Visual Builder Hand:</strong> 
+          <strong>Concealed Hand (暗手牌):</strong> 
           <span id="builder-count" style="color:var(--accent-gold); font-weight:700; margin-left:6px;">0/14</span>
           <span style="font-size:0.78rem; color:var(--text-muted); margin-left:8px;">(Click any tile below to remove)</span>
         </div>
@@ -762,7 +833,7 @@
       </div>
 
       <div id="builder-hand-tiles" class="hand-tiles-rack" style="min-height:110px; margin-bottom:16px;">
-        <div style="color:var(--text-muted); padding:10px;">Click tiles from the palette below or load a preset above to build your 14-tile hand.</div>
+        <div style="color:var(--text-muted); padding:10px;">Click tiles from the palette below or load a preset above to build your hand.</div>
       </div>
 
       <!-- Tile Palette -->

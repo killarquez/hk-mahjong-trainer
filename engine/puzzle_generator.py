@@ -1,273 +1,152 @@
 """
-Procedural Tactical Puzzle Generator for TVB 2026 Hong Kong Mahjong.
-Generates infinite mathematically verified scenario variations for specific tactical themes:
-- Multi-Sided & Complex Consecutive Waits (5-sided, Nobeta, Aryamen)
-- 1-Fan Minimum Pivots & 0-Fan Chicken Hand Traps
-- Guest Wind Discards vs Terminals
-- Thirteen Orphans & Limit Hand Branching
+Procedural Tactical Puzzle Generator for TVB 2026 Hong Kong Mahjong Tournament.
+Generates dynamic endless benchmark puzzles across 4 competitive tournament categories:
+1. multi_sided_waits: Complex multi-tile winning waits (3-sided, 4-sided, 5-sided waits: e.g. 23456, 334556, 1112345678999).
+2. one_fan_pivots: 1-Fan minimum tournament dilemmas (avoiding 0-fan chicken hand traps by sacrificing 1-2 outs to secure Ping Hu or Value Honor).
+3. flush_discards: Half Flush / Full Flush shape optimization (purging non-suit tiles while preserving maximum suit connectivity).
+4. opening_discards: Opening turn-1 / turn-2 shape efficiency and value preservation.
 """
 
 import random
-from typing import Dict, Any, List
-from engine.tiles import (
-    ALL_TILE_CODES,
-    INDEX_TILE_MAP, 
-    TILE_INDEX_MAP, 
-    TILE_INFO_MAP, 
-    sort_tiles, 
-    hand_to_counts
-)
+from typing import Dict, Any, List, Optional
+from engine.tiles import ALL_TILE_CODES, sort_tiles, hand_to_counts, INDEX_TILE_MAP, TILE_INFO_MAP
+from engine.shanten import calculate_tvb_shanten
 from engine.ukeire import calculate_ukeire_for_13
 from evaluator import evaluate_14_hand
 
+SUITS = ['m', 'p', 's']
+WINDS = ['1z', '2z', '3z', '4z']
+DRAGONS = ['5z', '6z', '7z']
 
-def _make_chow(suit: str, start_val: int) -> List[str]:
-    """Helper to create a 3-tile Chow sequence."""
-    return [f"{start_val}{suit}", f"{start_val+1}{suit}", f"{start_val+2}{suit}"]
+def generate_multi_sided_wait_puzzle() -> Dict[str, Any]:
+    """Generates a 14-tile hand that contains a complex multi-sided wait (3+ accepted outs for Tenpai)."""
+    suit = random.choice(SUITS)
+    other_suits = [s for s in SUITS if s != suit]
+    other_suit = random.choice(other_suits)
 
+    templates = [
+        # 1. Five-sided / Four-sided shape: 2345678 in suit + 2 melds + pair + 1 junk
+        lambda s, os: [f"2{s}", f"3{s}", f"4{s}", f"5{s}", f"6{s}", f"7{s}", f"8{s}", f"2{os}", f"3{os}", f"4{os}", f"7{os}", f"7{os}", f"9{os}", random.choice(["1z", "2z", "3z", "4z"])],
+        # 2. Overlapping double sequence + pair: 334556 in suit + meld + pair + 1 isolated
+        lambda s, os: [f"3{s}", f"3{s}", f"4{s}", f"5{s}", f"5{s}", f"6{s}", f"4{os}", f"5{os}", f"6{os}", f"8{os}", f"8{os}", f"1{os}", f"2{os}", random.choice(["5z", "6z", "7z"])],
+        # 3. Triple sequence with embedded pair: 2344567 in suit + meld + pair + 1 isolated
+        lambda s, os: [f"2{s}", f"3{s}", f"4{s}", f"4{s}", f"5{s}", f"6{s}", f"7{s}", f"1{os}", f"2{os}", f"3{os}", f"9{os}", f"9{os}", f"5{os}", random.choice(["1z", "2z"])],
+        # 4. Extended Lianmen: 34567 in suit + 2 melds + pair + 1 isolated
+        lambda s, os: [f"3{s}", f"4{s}", f"5{s}", f"6{s}", f"7{s}", f"1{os}", f"2{os}", f"3{os}", f"6{os}", f"7{os}", f"8{os}", f"9{os}", f"9{os}", random.choice(["3z", "4z"])]
+    ]
 
-def _make_pong(tile: str) -> List[str]:
-    """Helper to create a 3-tile Pong triplet."""
-    return [tile, tile, tile]
-
-
-def _make_pair(tile: str) -> List[str]:
-    """Helper to create a 2-tile Pair."""
-    return [tile, tile]
-
-
-def generate_waits_puzzle(seat_wind: str = "1z", prevailing_wind: str = "1z") -> Dict[str, Any]:
-    """
-    Generates a procedural Multi-Sided Wait puzzle.
-    Builds a 5-tile or 4-tile consecutive block (e.g. 23456m or 34567p) + 2 finished melds + 1 pair + 1 isolated dummy.
-    """
-    suits = ['m', 'p', 's']
-    primary_suit = random.choice(suits)
-    other_suits = [s for s in suits if s != primary_suit]
-
-    # Pattern A: 5-tile consecutive shape (e.g., 23456 or 34567 or 45678)
-    start = random.randint(2, 4)
-    run_5 = [f"{start + i}{primary_suit}" for i in range(5)]
-
-    # Melds in other suits
-    meld1 = _make_chow(other_suits[0], random.randint(1, 7))
-    meld2 = _make_chow(other_suits[1], random.randint(1, 7))
-
-    # Pair in honors or other suit
-    pair_tile = random.choice(['1z', '2z', '3z', '4z', '5z', '6z', '7z'])
-    pair = _make_pair(pair_tile)
-
-    # Isolated dummy tile to discard (a guest wind or disconnected tile)
-    dummy_choices = [t for t in ['1z', '2z', '3z', '4z', '5z', '6z', '7z'] if t != pair_tile]
-    dummy = [random.choice(dummy_choices)]
-
-    # Total: 5 + 3 + 3 + 2 + 1 = 14 tiles
-    raw_tiles = run_5 + meld1 + meld2 + pair + dummy
-    hand_tiles = sort_tiles(raw_tiles)
-
-    eval_result = evaluate_14_hand(hand_tiles, seat_wind, prevailing_wind)
+    chosen_template = random.choice(templates)
+    tiles = sort_tiles(chosen_template(suit, other_suit))
+    eval_res = evaluate_14_hand(tiles, seat_wind="1z", prevailing_wind="1z")
 
     return {
-        "category": "waits",
-        "category_name_zh": "多面聽牌效特訓",
-        "category_name_en": "Multi-Sided Waits Drill",
-        "title": f"{primary_suit.upper()}-Suit Multi-Sided Sequential Run Drill",
-        "subtitle": f"Complex continuous shape ({run_5[0]}-{run_5[-1]}) with high-efficiency outs",
-        "description": "Your hand contains a continuous sequential run. Identify the disconnected tile to discard to unlock the maximum multi-sided Ryanmen tile acceptance!",
-        "tiles": hand_tiles,
-        "seat_wind": seat_wind,
-        "prevailing_wind": prevailing_wind,
-        "hint": f"The continuous block in {primary_suit.upper()} can expand into multiple sequences or provide two-sided waits. Discard the isolated honor/dummy.",
-        "proverb": "長條連續莫輕拆，五面聽張天下行",
-        "evaluation": eval_result
+        "category": "multi_sided_waits",
+        "category_name": "多面聽與複雜牌型 (Multi-Sided Waits)",
+        "category_name_zh": "多面聽牌效",
+        "title": "Complex Multi-Sided Shape Optimization (多面聽牌型抉擇)",
+        "hand": tiles,
+        "tiles": tiles,
+        "scenario": f"You are in East Round. Your hand contains a highly connected {TILE_INFO_MAP[f'1{suit}']['chinese'][1:]} shape. Identify the discard that maximizes your multi-sided winning wait without breaking connected sequences.",
+        "eval": eval_res,
+        "evaluation": eval_res
     }
 
+def generate_one_fan_pivot_puzzle() -> Dict[str, Any]:
+    """Generates a 14-tile hand that risks becoming an illegal 0-Fan Chicken Hand (雞胡) under TVB 2026 rules."""
+    s1, s2 = random.sample(SUITS, 2)
+    dragon = random.choice(DRAGONS)
+    d_info = TILE_INFO_MAP[dragon]
 
-def generate_chicken_hand_trap_puzzle(seat_wind: str = "1z", prevailing_wind: str = "1z") -> Dict[str, Any]:
-    """
-    Generates a 0-Fan Chicken Hand Trap puzzle.
-    Constructs 4 valid Chows in numbered suits + Dragon pair (which has 0 Fan in TVB 2026) + 1 isolated tile.
-    """
-    suits = ['m', 'p', 's']
-    s1, s2, s3 = random.sample(suits, 3)
+    tiles = sort_tiles([
+        f"2{s1}", f"2{s1}", f"2{s1}",  # Triplet of number (disqualifies Ping Hu)
+        f"4{s1}", f"5{s1}", f"6{s1}",  # Chow 1
+        f"3{s2}", f"4{s2}", f"5{s2}",  # Chow 2
+        f"7{s2}", f"8{s2}",            # Partial chow (needs 6s2 or 9s2)
+        f"8{s1}", f"8{s1}",            # Numbered pair (not value honor)
+        dragon                         # Dragon tile
+    ])
 
-    # 4 chows (3+3+3+2 = 11 numbered tiles)
-    chow1 = _make_chow(s1, random.randint(1, 6))
-    chow2 = _make_chow(s2, random.randint(1, 6))
-    chow3 = _make_chow(s3, random.randint(1, 6))
+    eval_res = evaluate_14_hand(tiles, seat_wind="1z", prevailing_wind="1z")
+
+    return {
+        "category": "one_fan_pivots",
+        "category_name": "1番起胡與避開雞胡陷阱 (1-Fan Pivot & Chicken Traps)",
+        "category_name_zh": "1番起胡抉擇",
+        "title": "TVB 1-Fan Minimum Guarantee Dilemma (最低1番起胡抉擇)",
+        "hand": tiles,
+        "tiles": tiles,
+        "scenario": f"TVB 2026 tournament rules strictly enforce a 1-Fan minimum. A 0-Fan Chicken Hand (雞胡) cannot win. You hold {d_info['chinese']} ({dragon}) alongside mixed suits. Choose the strategic discard that avoids a 0-fan dead hand trap.",
+        "eval": eval_res,
+        "evaluation": eval_res
+    }
+
+def generate_flush_puzzle() -> Dict[str, Any]:
+    """Generates a Half Flush / Full Flush shape dilemma."""
+    flush_suit = random.choice(SUITS)
+    honors = random.sample(WINDS + DRAGONS, 3)
+
+    flush_nums = random.sample([1, 2, 3, 4, 5, 6, 7, 8, 9], 7)
+    suit_tiles = [f"{n}{flush_suit}" for n in flush_nums]
+    suit_tiles.extend([f"{flush_nums[0]}{flush_suit}", f"{min(7, flush_nums[1])+1}{flush_suit}", f"{min(7, flush_nums[1])+2}{flush_suit}"])
     
-    # 2-tile consecutive wait in s1 (e.g. 23s)
-    v = random.randint(2, 6)
-    ryanmen = [f"{v}{s1}", f"{v+1}{s1}"]
+    suit_tiles.extend([honors[0], honors[0], honors[1], honors[2]])
+    suit_tiles = suit_tiles[:14]
 
-    # Dragon pair (55z, 66z, or 77z - 0 Fan in chicken hand)
-    dragon_tile = random.choice(['5z', '6z', '7z'])
-    dragon_pair = _make_pair(dragon_tile)
-
-    # Isolated non-value wind
-    guest_winds = [w for w in ['1z', '2z', '3z', '4z'] if w != seat_wind and w != prevailing_wind]
-    dummy_wind = [random.choice(guest_winds if guest_winds else ['4z'])]
-
-    # Total: 3 + 3 + 3 + 2 + 2 + 1 = 14 tiles
-    raw_tiles = chow1 + chow2 + chow3 + ryanmen + dragon_pair + dummy_wind
-    hand_tiles = sort_tiles(raw_tiles)
-
-    eval_result = evaluate_14_hand(hand_tiles, seat_wind, prevailing_wind)
+    tiles = sort_tiles(suit_tiles)
+    eval_res = evaluate_14_hand(tiles, seat_wind="1z", prevailing_wind="1z")
 
     return {
-        "category": "fan_pivot",
-        "category_name_zh": "1番起胡抉擇特訓",
-        "category_name_en": "1-Fan Minimum Pivot Drill",
-        "title": "0-Fan Chicken Hand Trap Avoidance Drill",
-        "subtitle": "Avoiding invalid Dragon-Pair 0-Fan traps under TVB 2026 rules",
-        "description": "In TVB 2026 rules, a hand of 4 Chows with an honor pair is 0 Fan (Chicken Hand / 雞胡) and ILLEGAL. Discard the isolated dead wind to preserve paths to Ping Hu (1 Fan) or Dragon Pong (1 Fan).",
-        "tiles": hand_tiles,
-        "seat_wind": seat_wind,
-        "prevailing_wind": prevailing_wind,
-        "hint": "Discard the isolated dead guest wind. You can either Pong the Dragon into a 1-Fan Dragon Pong, or complete Ping Hu by forming a numbered pair.",
-        "proverb": "雞胡無分難自救，平胡字眼不可留",
-        "evaluation": eval_result
+        "category": "flush_discards",
+        "category_name": "混一色與清一色取捨 (Flush Shape Optimization)",
+        "category_name_zh": "十番例牌與清混一色",
+        "title": "Half Flush vs Speed Pivot (混一色牌效與進張抉擇)",
+        "hand": tiles,
+        "tiles": tiles,
+        "scenario": f"You hold a heavy {TILE_INFO_MAP[f'1{flush_suit}']['chinese'][1:]} suit cluster with honor pairs. Balance maximizing Half Flush (混一色 3番) potential against pure tile acceptance speed.",
+        "eval": eval_res,
+        "evaluation": eval_res
     }
 
+def generate_opening_puzzle() -> Dict[str, Any]:
+    """Generates an opening turn 1-2 dilemma with multiple isolated honors, terminals, and partial blocks."""
+    s1, s2, s3 = SUITS
+    tiles = sort_tiles([
+        f"1{s1}", f"2{s1}", f"4{s1}", f"7{s1}", f"8{s1}",
+        f"3{s2}", f"5{s2}", f"6{s2}", f"9{s2}",
+        f"2{s3}", f"8{s3}",
+        "1z", "4z", "6z"
+    ])
 
-def generate_half_flush_puzzle(seat_wind: str = "1z", prevailing_wind: str = "1z") -> Dict[str, Any]:
-    """
-    Generates a Half Flush (混一色 - 3 Fan) vs Ping Hu dilemma.
-    Contains 8-9 tiles of one suit + 4 honor tiles + 1-2 stray foreign numbered tiles.
-    """
-    primary_suit = random.choice(['m', 'p', 's'])
-    foreign_suit = random.choice([s for s in ['m', 'p', 's'] if s != primary_suit])
-
-    # 9 tiles in primary suit (3 melds or runs)
-    meld1 = _make_chow(primary_suit, 1)
-    meld2 = _make_chow(primary_suit, 4)
-    meld3 = _make_chow(primary_suit, 7)
-
-    # 4 honor tiles (2 pairs)
-    h1, h2 = random.sample(['1z', '2z', '3z', '4z', '5z', '6z', '7z'], 2)
-    honors = _make_pair(h1) + _make_pair(h2)
-
-    # 1 isolated foreign suit tile
-    foreign_tile = [f"{random.randint(2, 8)}{foreign_suit}"]
-
-    # Total: 9 + 4 + 1 = 14 tiles
-    raw_tiles = meld1 + meld2 + meld3 + honors + foreign_tile
-    hand_tiles = sort_tiles(raw_tiles)
-
-    eval_result = evaluate_14_hand(hand_tiles, seat_wind, prevailing_wind)
+    eval_res = evaluate_14_hand(tiles, seat_wind="1z", prevailing_wind="1z")
 
     return {
-        "category": "fan_pivot",
-        "category_name_zh": "混一色 3番轉型特訓",
-        "category_name_en": "Half-Flush 3-Fan Pivot Drill",
-        "title": f"{primary_suit.upper()}-Suit Half Flush (混一色) 3-Fan Drill",
-        "subtitle": "Locking in a high-value 3-Fan Half Flush over a low-point hand",
-        "description": f"You hold a heavy {primary_suit.upper()}-suit structure with supporting honor pairs. Discard the isolated foreign {foreign_suit.upper()} tile to enter a 1-Shanten Half Flush worth 3 Fan!",
-        "tiles": hand_tiles,
-        "seat_wind": seat_wind,
-        "prevailing_wind": prevailing_wind,
-        "hint": f"Discard the isolated {foreign_tile[0]} to consolidate your hand into pure {primary_suit.upper()} + Honors (混一色 3番).",
-        "proverb": "混一色成氣候足，莫留雜色阻前程",
-        "evaluation": eval_result
+        "category": "opening_discards",
+        "category_name": "開局捨牌與價值保留 (Opening Discard Strategy)",
+        "category_name_zh": "字牌與防守",
+        "title": "Opening Turn-1 Value Retention (開局捨牌第一張)",
+        "hand": tiles,
+        "tiles": tiles,
+        "scenario": "Hand 1/16 opening turn. You hold multiple isolated honors (East, North, Green) and weak terminal suits. Identify the mathematically optimal discard that preserves maximum safe outs and value paths.",
+        "eval": eval_res,
+        "evaluation": eval_res
     }
 
-
-def generate_dead_wind_puzzle(seat_wind: str = "1z", prevailing_wind: str = "1z") -> Dict[str, Any]:
-    """
-    Generates a Dead Guest Wind vs Isolated Terminal Priority puzzle.
-    """
-    suits = ['m', 'p', 's']
-    s1, s2, s3 = suits
-
-    meld1 = _make_chow(s1, random.randint(1, 7))
-    meld2 = _make_chow(s2, random.randint(1, 7))
-    meld3 = _make_chow(s3, random.randint(1, 7))
-    pair = _make_pair(f"{random.randint(1, 9)}{s1}")
-
-    # Isolated guest wind (0 Fan)
-    guest_winds = [w for w in ['1z', '2z', '3z', '4z'] if w != seat_wind and w != prevailing_wind]
-    guest_wind = random.choice(guest_winds if guest_winds else ['4z'])
-
-    # Isolated terminal (1 or 9)
-    terminal_val = random.choice([1, 9])
-    terminal = f"{terminal_val}{s2}"
-
-    # Extra middle floating tile (e.g. 5p)
-    stray = f"{random.randint(3, 7)}{s3}"
-
-    # Total: 3 + 3 + 3 + 2 + 1 + 1 + 1 = 14 tiles
-    raw_tiles = meld1 + meld2 + meld3 + pair + [guest_wind, terminal, stray]
-    hand_tiles = sort_tiles(raw_tiles)
-
-    eval_result = evaluate_14_hand(hand_tiles, seat_wind, prevailing_wind)
-
-    return {
-        "category": "honors_defense",
-        "category_name_zh": "字牌與防守特訓",
-        "category_name_en": "Guest Wind Discard Drill",
-        "title": "Guest Wind Discard Priority Drill",
-        "subtitle": "Discarding zero-fan guest winds before connected terminals",
-        "description": "Evaluate opening discard priority: between an isolated zero-fan guest wind and an isolated numbered tile, which should be discarded first?",
-        "tiles": hand_tiles,
-        "seat_wind": seat_wind,
-        "prevailing_wind": prevailing_wind,
-        "hint": "Guest winds only have 3 remaining copies to form a pair. Numbered terminals can connect into 2-sided and 1-sided sequences.",
-        "proverb": "起手先捨無番字，數牌留待看連張",
-        "evaluation": eval_result
-    }
-
-
-def generate_thirteen_orphans_puzzle(seat_wind: str = "1z", prevailing_wind: str = "1z") -> Dict[str, Any]:
-    """
-    Generates a Thirteen Orphans (10 Fan) branching puzzle.
-    Contains 10 unique terminals/honors + 1 pair + 3 stray numbered tiles.
-    """
-    all_terminals = ['1m', '9m', '1p', '9p', '1s', '9s', '1z', '2z', '3z', '4z', '5z', '6z', '7z']
-    chosen_10 = random.sample(all_terminals, 10)
-    paired = chosen_10[0]
-
-    # 3 stray inner numbered tiles (2..8)
-    strays = [f"{random.randint(2, 7)}m", f"{random.randint(3, 7)}p", f"{random.randint(4, 7)}s"]
-
-    raw_tiles = chosen_10 + [paired] + strays
-    hand_tiles = sort_tiles(raw_tiles)
-
-    eval_result = evaluate_14_hand(hand_tiles, seat_wind, prevailing_wind)
-
-    return {
-        "category": "limit_hands",
-        "category_name_zh": "十番例牌特訓",
-        "category_name_en": "Thirteen Orphans Limit Hand Drill",
-        "title": "10-Terminal Thirteen Orphans Branching Drill",
-        "subtitle": "Deciding when to chase the 10-Fan maximum limit hand",
-        "description": "You hold 10 unique Terminals/Honors. Discard an isolated inner numbered tile to pursue Thirteen Orphans (10 Fan)!",
-        "tiles": hand_tiles,
-        "seat_wind": seat_wind,
-        "prevailing_wind": prevailing_wind,
-        "hint": "With 10 unique terminal/honor tiles, you are only 3-Shanten away from Thirteen Orphans. Discard one of the stray middle tiles.",
-        "proverb": "十張幺九十三起，滿胡十番莫遲疑",
-        "evaluation": eval_result
-    }
-
-
-def generate_procedural_puzzle(category: str = "waits", seat_wind: str = "1z", prevailing_wind: str = "1z") -> Dict[str, Any]:
-    """Router to generate a procedural puzzle for any tactical category."""
-    if category == "waits":
-        return generate_waits_puzzle(seat_wind, prevailing_wind)
-    elif category == "fan_pivot":
-        generators = [generate_chicken_hand_trap_puzzle, generate_half_flush_puzzle]
-        return random.choice(generators)(seat_wind, prevailing_wind)
-    elif category == "honors_defense":
-        return generate_dead_wind_puzzle(seat_wind, prevailing_wind)
-    elif category == "limit_hands":
-        return generate_thirteen_orphans_puzzle(seat_wind, prevailing_wind)
+def generate_puzzle_by_category(category: Optional[str] = None) -> Dict[str, Any]:
+    """Generates a procedural tactical puzzle by category or randomly."""
+    cat = (category or "all").lower()
+    if cat in ["multi_sided_waits", "waits"]:
+        return generate_multi_sided_wait_puzzle()
+    elif cat in ["one_fan_pivots", "fan_pivot"]:
+        return generate_one_fan_pivot_puzzle()
+    elif cat in ["flush_discards", "limit_hands"]:
+        return generate_flush_puzzle()
+    elif cat in ["opening_discards", "honors_defense"]:
+        return generate_opening_puzzle()
     else:
-        # Random pick across all categories
-        generators = [
-            generate_waits_puzzle,
-            generate_chicken_hand_trap_puzzle,
-            generate_half_flush_puzzle,
-            generate_dead_wind_puzzle,
-            generate_thirteen_orphans_puzzle
-        ]
-        return random.choice(generators)(seat_wind, prevailing_wind)
+        fn = random.choice([
+            generate_multi_sided_wait_puzzle,
+            generate_one_fan_pivot_puzzle,
+            generate_flush_puzzle,
+            generate_opening_puzzle
+        ])
+        return fn()

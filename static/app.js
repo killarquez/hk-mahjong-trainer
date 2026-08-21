@@ -337,6 +337,18 @@
   let currentStreak = 0;
   let customBuilderTiles = [];
 
+  // V3.0 State Extensions
+  let trainerMode = 'blind'; // 'blind' | 'assisted'
+  let shotClockDuration = 0; // 0 = off, 10, 5
+  let shotClockTimeLeft = 0;
+  let shotClockTimer = null;
+  let trainerCategory = 'all';
+  let userHasDiscardedCurrentHand = false;
+  let builderOpenMelds = [];
+  let botSpeedMs = 600;
+  let botTournamentDiscards = 0;
+  let botTournamentOptimal = 0;
+
   // Tactical Puzzles State
   let puzzleMode = 'curated'; // 'curated' | 'drill'
   const puzzles = TACTICAL_PUZZLES;
@@ -516,6 +528,65 @@
           switchTab(target);
         }
       });
+    });
+
+    // Trainer Mode & Shot Clock Selectors
+    document.getElementById('select-trainer-mode')?.addEventListener('change', (e) => {
+      trainerMode = e.target.value;
+      const hint = document.getElementById('trainer-mode-hint');
+      if (hint) {
+        hint.textContent = (trainerMode === 'blind') 
+          ? '🙈 Blind Mode Active: Make your decision; grade & matrix reveal after discard' 
+          : '👁️ Live Hint Mode: Full Ukeire matrix visible in real-time';
+      }
+      if (currentEvaluation) {
+        renderEvaluationTable(currentEvaluation, selectedDiscard);
+      }
+    });
+
+    document.getElementById('select-shot-clock')?.addEventListener('change', (e) => {
+      shotClockDuration = parseInt(e.target.value, 10) || 0;
+      if (shotClockDuration > 0 && !userHasDiscardedCurrentHand && !(currentEvaluation && currentEvaluation.is_winning_hand)) {
+        startShotClock(shotClockDuration);
+      } else {
+        stopShotClock();
+      }
+    });
+
+    document.getElementById('select-trainer-category')?.addEventListener('change', (e) => {
+      trainerCategory = e.target.value || 'all';
+      sound.playTileClick();
+      loadNewHand();
+    });
+
+    // Bot Match Speed Buttons
+    document.querySelectorAll('.btn-bot-speed').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.btn-bot-speed').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        botSpeedMs = parseInt(e.currentTarget.dataset.speed, 10) || 600;
+        sound.playTileClick();
+      });
+    });
+
+    // Builder Exposed Melds Buttons
+    document.getElementById('btn-builder-add-chow')?.addEventListener('click', () => {
+      promptAddBuilderChow();
+    });
+
+    document.getElementById('btn-builder-add-pong')?.addEventListener('click', () => {
+      promptAddBuilderPong();
+    });
+
+    document.getElementById('btn-builder-add-kong')?.addEventListener('click', () => {
+      promptAddBuilderKong();
+    });
+
+    document.getElementById('btn-builder-clear-melds')?.addEventListener('click', () => {
+      sound.playTileClick();
+      builderOpenMelds = [];
+      renderBuilderMelds();
+      analyzeCustomBuilderHand();
     });
 
     // Wind Selectors
@@ -1182,14 +1253,72 @@
   }
 
   // =========================================================================
-  // DISCARD TRAINER FUNCTIONS
+  // DISCARD TRAINER FUNCTIONS (V3.0 Blind Mode & Shot Clock)
   // =========================================================================
+  function startShotClock(duration) {
+    stopShotClock();
+    if (!duration || duration <= 0) return;
+
+    shotClockTimeLeft = duration;
+    const barContainer = document.getElementById('shot-clock-bar-container');
+    const numEl = document.getElementById('shot-clock-num');
+    const progEl = document.getElementById('shot-clock-progress');
+    const statusEl = document.getElementById('shot-clock-status');
+
+    if (barContainer) barContainer.style.display = 'block';
+    if (numEl) numEl.textContent = shotClockTimeLeft;
+    if (statusEl) statusEl.textContent = 'Pick your discard before the buzzer!';
+    if (progEl) {
+      progEl.style.width = '100%';
+      progEl.style.background = 'var(--accent-emerald)';
+    }
+
+    shotClockTimer = setInterval(() => {
+      shotClockTimeLeft--;
+      if (numEl) numEl.textContent = shotClockTimeLeft;
+      if (progEl) {
+        const pct = Math.max(0, (shotClockTimeLeft / duration) * 100);
+        progEl.style.width = `${pct}%`;
+        if (shotClockTimeLeft <= 3) {
+          progEl.style.background = 'var(--accent-coral)';
+          sound.playWarning();
+        } else if (shotClockTimeLeft <= 5) {
+          progEl.style.background = 'var(--accent-gold)';
+        }
+      }
+
+      if (shotClockTimeLeft <= 0) {
+        stopShotClock();
+        if (statusEl) statusEl.textContent = '⏰ Time Expired! Auto-discarding last tile...';
+        if (currentHand && currentHand.length > 0 && !userHasDiscardedCurrentHand && !(currentEvaluation && currentEvaluation.is_winning_hand)) {
+          handleUserDiscard(currentHand[currentHand.length - 1]);
+        }
+      }
+    }, 1000);
+  }
+
+  function stopShotClock() {
+    if (shotClockTimer) {
+      clearInterval(shotClockTimer);
+      shotClockTimer = null;
+    }
+  }
+
   async function loadNewHand() {
+    stopShotClock();
+    userHasDiscardedCurrentHand = false;
+    const gradingCard = document.getElementById('trainer-grading-card');
+    if (gradingCard) gradingCard.style.display = 'none';
+
     try {
       const res = await fetch('/api/random-hand', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ seat_wind: seatWind, prevailing_wind: prevailingWind })
+        body: JSON.stringify({ 
+          seat_wind: seatWind, 
+          prevailing_wind: prevailingWind,
+          category: trainerCategory || 'all'
+        })
       });
       const data = await res.json();
       currentHand = data.tiles;
@@ -1203,6 +1332,9 @@
       } else {
         renderEvaluationTable(data.evaluation);
         hideFeedback();
+        if (shotClockDuration > 0) {
+          startShotClock(shotClockDuration);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -1210,6 +1342,8 @@
   }
 
   async function loadCustomHandString(str) {
+    stopShotClock();
+    userHasDiscardedCurrentHand = false;
     try {
       const res = await fetch('/api/parse-hand', {
         method: 'POST',
@@ -1250,6 +1384,9 @@
       } else {
         renderEvaluationTable(evalData);
         hideFeedback();
+        if (shotClockDuration > 0 && !userHasDiscardedCurrentHand) {
+          startShotClock(shotClockDuration);
+        }
       }
     } catch (err) {
       alert(err.message);
@@ -1263,17 +1400,19 @@
     const isWinning = !!(currentEvaluation && currentEvaluation.is_winning_hand);
 
     const titleEl = document.querySelector('.hand-title');
-    const tipEl = document.querySelector('.hand-tip');
+    const tipEl = document.querySelector('#trainer-mode-hint') || document.querySelector('.hand-tip');
     if (titleEl) {
       if (isWinning) {
         titleEl.innerHTML = `🏆 🎉 恭喜胡牌！ Winning Hand Completed (Agari)`;
       } else {
-        titleEl.innerHTML = `🀄 Your 14-Tile Hand (Click any tile or press 1-9/0/-/=/q/w to discard):`;
+        titleEl.innerHTML = `🀄 Your Hand (Click tile or press 1-9/0/-/=/q/w to discard):`;
       }
     }
     if (tipEl) {
       if (isWinning) {
-        tipEl.innerHTML = `Round complete! You do not discard any more tiles. Click 'Start Next Hand' below to continue.`;
+        tipEl.innerHTML = `Round complete! You do not discard any more tiles. Click 'Deal Next Hand' to continue.`;
+      } else if (trainerMode === 'blind' && !userHasDiscardedCurrentHand) {
+        tipEl.innerHTML = `🙈 Blind Mode Active: Make your decision; grade & matrix reveal after discard`;
       } else {
         tipEl.innerHTML = `Optimal discard maximizes Ukeire Outs for lowest Shanten`;
       }
@@ -1303,8 +1442,10 @@
   async function handleUserDiscard(tile) {
     if (currentEvaluation && currentEvaluation.is_winning_hand) return;
 
+    stopShotClock();
     sound.playTileClick();
     selectedDiscard = tile;
+    userHasDiscardedCurrentHand = true;
 
     try {
       const res = await fetch('/api/evaluate', {
@@ -1322,6 +1463,7 @@
 
       const comp = evalResult.comparison;
       if (comp) {
+        renderTrainerGradingCard(comp);
         showFeedback(comp);
         updateStats(comp.is_correct, comp.outs_delta);
         if (comp.is_correct) {
@@ -1335,6 +1477,246 @@
     } catch (err) {
       alert(err.message);
     }
+  }
+
+  function renderTrainerGradingCard(comp) {
+    const card = document.getElementById('trainer-grading-card');
+    if (!card) return;
+
+    card.style.display = 'block';
+    const isOpt = comp.is_correct;
+    const isBlunder = !isOpt && (comp.outs_delta >= 6 || comp.user_shanten > comp.best_shanten);
+
+    let badgeText = isOpt ? '🌟 最優打法 OPTIMAL' : (isBlunder ? '❌ 嚴重失誤 BLUNDER' : '⚠️ 次優打法 SUBOPTIMAL');
+    let badgeBg = isOpt ? 'var(--accent-emerald)' : (isBlunder ? '#ef4444' : 'var(--accent-coral)');
+
+    card.innerHTML = `
+      <div style="background:rgba(0,0,0,0.45); border:1px solid ${isOpt ? 'var(--accent-emerald)' : (isBlunder ? '#ef4444' : 'var(--accent-coral)')}; border-radius:10px; padding:14px 18px; box-shadow:0 4px 18px rgba(0,0,0,0.4);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+          <div style="font-size:1.1rem; font-weight:800; color:${isOpt ? 'var(--accent-emerald)' : (isBlunder ? '#fca5a5' : 'var(--accent-coral)')};">
+            ${badgeText}
+          </div>
+          <span class="badge" style="background:${badgeBg}; color:#fff; font-weight:700;">
+            ${isOpt ? `Max ${comp.user_outs} Outs Preserved` : `Loss of ${comp.outs_delta} Outs`}
+          </span>
+        </div>
+        <div style="font-size:0.9rem; color:#e2e8f0; line-height:1.6;">
+          ${comp.delta_reasoning_zh.replace(/\n/g, '<br/>')}
+        </div>
+        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">
+          ${comp.delta_reasoning_en}
+        </div>
+      </div>
+    `;
+  }
+
+  function showVictory(evalData) {
+    stopShotClock();
+    sound.playVictory();
+
+    const box = document.getElementById('feedback-box');
+    if (!box) return;
+
+    box.className = `feedback-box victory`;
+    box.style.display = 'block';
+
+    const fanData = evalData.winning_fan;
+    const handName = fanData?.hand_name || '胡牌 (Winning Hand)';
+    const totalFan = fanData?.total_fan || 1;
+    const breakdown = fanData?.breakdown || [];
+
+    box.innerHTML = `
+      <div class="feedback-header" style="border-bottom:1px solid rgba(229,185,76,0.3); padding-bottom:12px; margin-bottom:14px;">
+        <div class="victory-title">
+          <span>🏆 🎉 自摸胡牌！ Winning Hand Achieved!</span>
+          <span class="victory-fan-badge">${totalFan} 番 / Fan</span>
+        </div>
+        <button id="btn-victory-next-hand" class="btn btn-victory">
+          🎲 Deal Next Hand (再開一局) ➔
+        </button>
+      </div>
+
+      <div style="font-size:1.05rem; margin-bottom:12px;">
+        <strong>胡牌牌型：</strong> <span style="color:var(--accent-gold); font-size:1.15rem; font-weight:700;">${handName}</span>
+      </div>
+
+      <div style="background:rgba(0,0,0,0.35); border-radius:8px; padding:12px 16px; border:1px solid rgba(255,255,255,0.1); margin-bottom:16px;">
+        <div style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px; font-weight:600;">Scoring Breakdown (番數詳情):</div>
+        <ul style="list-style:none; padding-left:0;">
+          ${breakdown.map(b => `
+            <li style="padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center;">
+              <span><strong>${b.name}</strong> <span style="color:var(--text-muted);">(${b.jyutping})</span> - ${b.desc}</span>
+              <span style="color:var(--accent-gold); font-weight:700;">+${b.fan} 番</span>
+            </li>
+          `).join('')}
+        </ul>
+      </div>
+
+      <div style="font-size:0.9rem; color:var(--accent-emerald);">
+        ✨ 牌局已完美結束！在真實比賽中達到胡牌條件即停止打牌。點擊上方按鈕開始新一輪牌效訓練！
+      </div>
+    `;
+
+    document.getElementById('btn-victory-next-hand')?.addEventListener('click', () => {
+      sound.playTileClick();
+      loadNewHand();
+    });
+
+    renderEvaluationTable(evalData);
+  }
+
+  function showFeedback(comp) {
+    const box = document.getElementById('feedback-box');
+    if (!box) return;
+
+    box.className = `feedback-box ${comp.status}`;
+    box.style.display = 'block';
+
+    box.innerHTML = `
+      <div class="feedback-header">
+        <div id="feedback-title" class="feedback-title">${comp.status === 'optimal' ? '✨' : '⚠️'} ${comp.title_zh} (${comp.title_en})</div>
+        <button id="btn-next-turn" class="btn btn-primary" style="display:${continuousMode ? 'inline-flex' : 'none'};">
+          Draw Next Tile (摸下一張牌) ➔
+        </button>
+      </div>
+      <div id="feedback-desc" class="feedback-body">
+        <p>${comp.delta_reasoning_zh.replace(/\n/g, '<br/>')}</p>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:6px;">${comp.delta_reasoning_en}</p>
+      </div>
+
+      <div class="outs-comparison-grid">
+        <div id="user-outs-card" class="outs-card">
+          <div class="outs-card-title">Your Discard: ${comp.user_discard}</div>
+          <div class="outs-card-val" style="color: ${comp.is_correct ? 'var(--accent-emerald)' : 'var(--accent-coral)'};">
+            ${comp.user_outs} Outs (${comp.user_shanten === 0 ? 'Tenpai' : comp.user_shanten + '-Shanten'})
+          </div>
+          <div class="outs-chips">
+            ${comp.user_accepted_tiles.map(t => `
+              <span class="chip-tile">
+                <img src="/static/tiles/${t.tile}.png?v=4" style="width:16px; height:20px; object-fit:contain;" />
+                ${t.tile} <span class="count">(${t.count})</span>
+              </span>
+            `).join('')}
+          </div>
+        </div>
+
+        <div id="optimal-outs-card" class="outs-card">
+          <div class="outs-card-title">Optimal Discard: ${comp.optimal_discard}</div>
+          <div class="outs-card-val" style="color: var(--accent-emerald);">
+            ${comp.best_outs} Outs (${comp.best_shanten === 0 ? 'Tenpai' : comp.best_shanten + '-Shanten'})
+          </div>
+          <div class="outs-chips">
+            ${comp.best_accepted_tiles.map(t => `
+              <span class="chip-tile">
+                <img src="/static/tiles/${t.tile}.png?v=4" style="width:16px; height:20px; object-fit:contain;" />
+                ${t.tile} <span class="count">(${t.count})</span>
+              </span>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('btn-next-turn')?.addEventListener('click', () => {
+      advanceNextTurn();
+    });
+  }
+
+  function hideFeedback() {
+    const box = document.getElementById('feedback-box');
+    if (box) box.style.display = 'none';
+  }
+
+  function renderEvaluationTable(evalData, highlightedDiscard) {
+    const tbody = document.getElementById('discards-table-body');
+    if (!tbody) return;
+
+    if (evalData.is_winning_hand) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align:center; padding:32px 16px; font-size:1.1rem; color:var(--accent-gold);">
+            🏆 <strong>恭喜胡牌！ (Round Complete)</strong><br/>
+            <span style="font-size:0.88rem; color:var(--text-muted);">手牌已達胡牌條件，無需再進行打牌。點擊上方「發下一副牌」開啟新練習。</span>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    // In Blind Mode before user discard, hide the answer matrix!
+    if (trainerMode === 'blind' && !userHasDiscardedCurrentHand) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align:center; padding:36px 16px;">
+            <div style="font-size:1.15rem; color:var(--accent-gold); font-weight:800; margin-bottom:6px;">
+              🙈 Tournament Blind Mode Active (實戰盲打模式)
+            </div>
+            <div style="color:#cbd5e1; font-size:0.9rem; max-width:600px; margin:0 auto; line-height:1.6;">
+              Test your intrinsic pattern recognition! Click your chosen discard from the rack above. Full mathematical ranking, Ukeire matrix, and instant grading will reveal immediately.
+            </div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = evalData.discards.map((d, index) => {
+      const isHighlighted = (d.tile === highlightedDiscard);
+      const isOpt = d.is_optimal;
+      const shantenClass = d.shanten <= 0 ? 'shanten-0' : (d.shanten === 1 ? 'shanten-1' : 'shanten-2');
+
+      return `
+        <tr class="${isOpt ? 'row-optimal' : ''} ${isHighlighted ? 'row-user-selected' : ''}">
+          <td>
+            <span class="rank-badge ${index === 0 ? 'rank-1' : ''}">#${index + 1}</span>
+          </td>
+          <td>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <img src="/static/tiles/${d.tile}.png" alt="${d.tile}" style="width:28px; height:36px; object-fit:contain;" />
+              <div>
+                <strong style="color:${isOpt ? 'var(--accent-emerald)' : '#fff'}">${d.chinese} (${d.tile})</strong>
+                <div style="font-size:0.75rem; color:var(--text-muted);">${d.jyutping}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="shanten-badge ${shantenClass}">
+              ${d.shanten === 0 ? '🎯 聽牌 (Tenpai)' : `${d.shanten}向聽 (${d.shanten}-Shanten)`}
+            </span>
+          </td>
+          <td>
+            <strong style="font-size:1.1rem; color:var(--accent-gold);">${d.total_outs}</strong>
+            <span style="font-size:0.75rem; color:var(--text-muted);"> (${d.unique_acceptance_count} types)</span>
+          </td>
+          <td>
+            <div class="outs-chips">
+              ${d.accepted_tiles.map(t => `
+                <span class="chip-tile">
+                  <img src="/static/tiles/${t.tile}.png?v=4" style="width:14px; height:18px; object-fit:contain;" />
+                  ${t.tile}<span class="count">(${t.count})</span>
+                </span>
+              `).join('')}
+            </div>
+          </td>
+          <td>
+            <div style="font-size:0.8rem; color:var(--accent-cyan);">
+              ${d.viable_paths.slice(0, 2).map(p => p.name).join('<br/>')}
+            </div>
+          </td>
+          <td>
+            <button class="btn btn-secondary btn-try-discard" data-tile="${d.tile}" style="padding:4px 10px; font-size:0.75rem;">
+              Evaluate
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    tbody.querySelectorAll('.btn-try-discard').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        handleUserDiscard(e.currentTarget.dataset.tile);
+      });
+    });
   }
 
   function showVictory(evalData) {
@@ -1582,14 +1964,108 @@
     StorageManager.saveTrainerStats();
   }
 
+  function renderBuilderMelds() {
+    const list = document.getElementById('builder-melds-list');
+    const countEl = document.getElementById('builder-melds-count');
+    if (!list) return;
+
+    const meldTileCount = builderOpenMelds.length * 3;
+    const reqConcealed = 14 - meldTileCount;
+
+    if (countEl) {
+      countEl.textContent = `${builderOpenMelds.length} Meld(s) (${meldTileCount} Tiles) • Needs ${reqConcealed} Concealed Tiles`;
+    }
+
+    const bCount = document.getElementById('builder-count');
+    if (bCount) {
+      bCount.textContent = `${customBuilderTiles.length}/${reqConcealed}`;
+    }
+
+    if (builderOpenMelds.length === 0) {
+      list.innerHTML = `<span style="color:var(--text-muted); font-size:0.8rem;">No exposed melds (all 14 tiles concealed). Click buttons above to add open Chows, Pongs, or Kongs.</span>`;
+      return;
+    }
+
+    list.innerHTML = builderOpenMelds.map((m, mIdx) => `
+      <div class="meld-group" style="display:flex; align-items:center; background:rgba(0,0,0,0.5); padding:4px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.15); gap:4px;">
+        <span style="font-size:0.75rem; color:var(--accent-gold); font-weight:700; text-transform:uppercase; margin-right:4px;">${m.type}</span>
+        ${m.tiles.map(t => `
+          <img src="/static/tiles/${t}.png?v=4" alt="${t}" style="width:22px; height:30px; object-fit:contain; background:#fff; border-radius:2px;" />
+        `).join('')}
+        <button class="btn-remove-meld" data-meld-idx="${mIdx}" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:0.85rem; margin-left:6px;" title="Remove Meld">✕</button>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('.btn-remove-meld').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const idx = parseInt(e.currentTarget.dataset.meldIdx, 10);
+        builderOpenMelds.splice(idx, 1);
+        sound.playTileClick();
+        renderBuilderMelds();
+      });
+    });
+  }
+
+  function promptAddBuilderChow() {
+    if (builderOpenMelds.length >= 4) {
+      alert('A hand can have at most 4 melds.');
+      return;
+    }
+    const suit = prompt('Enter Chow suit (m for Characters, p for Dots, s for Bamboos):', 'm');
+    if (!suit || !['m', 'p', 's'].includes(suit.toLowerCase())) return;
+    const startNum = parseInt(prompt('Enter starting number of Chow sequence (1 to 7):', '1'), 10);
+    if (!startNum || startNum < 1 || startNum > 7) {
+      alert('Starting number must be between 1 and 7.');
+      return;
+    }
+    const s = suit.toLowerCase();
+    const chowTiles = [`${startNum}${s}`, `${startNum + 1}${s}`, `${startNum + 2}${s}`];
+    builderOpenMelds.push({ type: 'chow', tiles: chowTiles });
+    sound.playTileClick();
+    renderBuilderMelds();
+  }
+
+  function promptAddBuilderPong() {
+    if (builderOpenMelds.length >= 4) {
+      alert('A hand can have at most 4 melds.');
+      return;
+    }
+    const tile = prompt('Enter tile code for Pong (e.g. 5z for Red Dragon, 1m, 9p, 2s):', '5z');
+    if (!tile || !ALL_34_TILES.includes(tile.toLowerCase())) {
+      alert('Invalid tile code.');
+      return;
+    }
+    const t = tile.toLowerCase();
+    builderOpenMelds.push({ type: 'pong', tiles: [t, t, t] });
+    sound.playTileClick();
+    renderBuilderMelds();
+  }
+
+  function promptAddBuilderKong() {
+    if (builderOpenMelds.length >= 4) {
+      alert('A hand can have at most 4 melds.');
+      return;
+    }
+    const tile = prompt('Enter tile code for Kong (e.g. 6z for Green Dragon, 1m, 9s):', '6z');
+    if (!tile || !ALL_34_TILES.includes(tile.toLowerCase())) {
+      alert('Invalid tile code.');
+      return;
+    }
+    const t = tile.toLowerCase();
+    builderOpenMelds.push({ type: 'kong', tiles: [t, t, t, t] });
+    sound.playTileClick();
+    renderBuilderMelds();
+  }
+
   function addTileToCustomBuilder(code) {
     const count = customBuilderTiles.filter(t => t === code).length;
     if (count >= 4) {
       alert(`Cannot add more than 4 copies of tile ${code} in a standard 136-tile deck.`);
       return;
     }
-    if (customBuilderTiles.length >= 14) {
-      alert("Hand already contains 14 tiles. Click 'Clear' or remove a tile to adjust.");
+    const maxConcealed = 14 - (builderOpenMelds.length * 3);
+    if (customBuilderTiles.length >= maxConcealed) {
+      alert(`Hand can have at most ${maxConcealed} concealed tiles when ${builderOpenMelds.length} melds are open.`);
       return;
     }
     customBuilderTiles.push(code);
@@ -1616,8 +2092,9 @@
       });
     });
 
+    const maxConcealed = 14 - (builderOpenMelds.length * 3);
     const countEl = document.getElementById('builder-count');
-    if (countEl) countEl.textContent = `${customBuilderTiles.length}/14`;
+    if (countEl) countEl.textContent = `${customBuilderTiles.length}/${maxConcealed}`;
   }
 
   async function loadStringIntoBuilder(str) {
@@ -1632,6 +2109,8 @@
         alert(data.errors.join('\n') || 'Invalid 14-tile notation.');
         return;
       }
+      builderOpenMelds = [];
+      renderBuilderMelds();
       customBuilderTiles = [...data.tiles];
       const inputEl = document.getElementById('input-custom-hand');
       if (inputEl) inputEl.value = str;
@@ -1643,8 +2122,9 @@
   }
 
   async function analyzeCustomBuilderHand() {
-    if (customBuilderTiles.length !== 14) {
-      alert(`A full hand analysis requires exactly 14 tiles (currently ${customBuilderTiles.length}). Add more tiles from the palette.`);
+    const totalCount = customBuilderTiles.length + (builderOpenMelds.length * 3);
+    if (totalCount !== 14) {
+      alert(`A full hand analysis requires exactly 14 tiles (currently ${customBuilderTiles.length} concealed + ${builderOpenMelds.length * 3} in melds = ${totalCount}). Add more tiles from the palette.`);
       return;
     }
 
@@ -1657,6 +2137,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           hand_tiles: customBuilderTiles,
+          open_melds: builderOpenMelds,
           seat_wind: seatWind,
           prevailing_wind: roundWind
         })

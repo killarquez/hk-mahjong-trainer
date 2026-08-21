@@ -46,7 +46,7 @@ logger = logging.getLogger("main")
 app = FastAPI(
     title="Hong Kong Mahjong Efficiency Trainer (TVB 2026 Rules)",
     description="Mathematical Shanten & Ukeire Tile Acceptance Engine for Hong Kong Mahjong.",
-    version="2.0.0"
+    version="3.0.0"
 )
 
 # CORS Middleware
@@ -91,11 +91,17 @@ def health_check():
 @app.post("/api/evaluate")
 def evaluate_hand_api(req: schemas.EvaluateHandRequest, db: Session = Depends(get_db)):
     """
-    Evaluates a 14-tile hand, computing Shanten, Ukeire outs, and optimal discard for every option.
+    Evaluates a hand, computing Shanten, Ukeire outs, and optimal discard for every option.
+    Supports open_melds for Hand Builder.
     If user_discard is provided, returns mathematical delta comparison and outs difference.
     """
     try:
-        eval_result = evaluate_14_hand(req.hand_tiles, req.seat_wind, req.prevailing_wind)
+        eval_result = evaluate_14_hand(
+            hand_tiles=req.hand_tiles,
+            seat_wind=req.seat_wind,
+            prevailing_wind=req.prevailing_wind,
+            open_melds=req.open_melds
+        )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -155,7 +161,28 @@ def evaluate_hand_api(req: schemas.EvaluateHandRequest, db: Session = Depends(ge
 @app.post("/api/random-hand")
 @app.post("/api/scenario/generate")
 def random_hand_api(req: schemas.RandomHandRequest, db: Session = Depends(get_db)):
-    """Deals a random 14-tile hand from a freshly shuffled 136-tile wall and computes full efficiency evaluation."""
+    """Deals a random 14-tile hand or category drill from a 136-tile wall and computes full efficiency evaluation."""
+    category = req.category or "all"
+    if category in ["multi_sided_waits", "one_fan_pivots", "flush_discards", "opening_discards"]:
+        from engine.puzzle_generator import generate_puzzle_by_category
+        puz = generate_puzzle_by_category(category)
+        tiles = puz["hand"]
+        formatted_tiles = format_tiles_cantonese(tiles)
+        return {
+            "tiles": tiles,
+            "formatted_tiles": formatted_tiles,
+            "seat_wind": req.seat_wind,
+            "prevailing_wind": req.prevailing_wind,
+            "remaining_wall_count": 122,
+            "evaluation": puz["eval"],
+            "drill_info": {
+                "category": puz["category"],
+                "category_name": puz["category_name"],
+                "title": puz["title"],
+                "scenario": puz["scenario"]
+            }
+        }
+
     scenario_data = generate_random_scenario(seat_wind=req.seat_wind, prevailing_wind=req.prevailing_wind)
     formatted_tiles = format_tiles_cantonese(scenario_data["tiles"])
 
@@ -209,28 +236,28 @@ def get_single_puzzle_api(puzzle_id: str):
 
 
 @app.post("/api/puzzles/generate-drill")
-def generate_drill_puzzle_api(req: schemas.PuzzleDrillRequest):
+@app.post("/api/puzzles/generate")
+def generate_drill_puzzle_api(req: Dict[str, Any]):
     """Generates an infinite procedural tactical puzzle matching the requested category/theme."""
-    from engine.puzzle_generator import generate_procedural_puzzle
-    puzzle = generate_procedural_puzzle(
-        category=req.category,
-        seat_wind=req.seat_wind,
-        prevailing_wind=req.prevailing_wind
-    )
+    from engine.puzzle_generator import generate_puzzle_by_category
+    category = req.get("category", "all") if isinstance(req, dict) else getattr(req, "category", "all")
+    puzzle = generate_puzzle_by_category(category=category)
     return {"puzzle": puzzle}
 
 
 @app.post("/api/hand/analyze-breakdown")
 def analyze_hand_breakdown_api(req: schemas.EvaluateHandRequest):
-    """Performs a deep tactical and structural breakdown of a 14-tile hand for the Hand Builder workbench."""
+    """Performs a deep tactical and structural breakdown of a hand for the Hand Builder workbench."""
     from engine.hand_analyzer import analyze_hand_deep_strategy
-    if len(req.hand_tiles) != 14:
-        raise HTTPException(status_code=400, detail=f"A full hand analysis requires exactly 14 tiles, got {len(req.hand_tiles)}.")
+    total_count = len(req.hand_tiles) + (len(req.open_melds) * 3 if req.open_melds else 0)
+    if total_count != 14:
+        raise HTTPException(status_code=400, detail=f"A full hand analysis requires exactly 14 tiles (concealed + exposed melds), got {total_count}.")
     
     analysis = analyze_hand_deep_strategy(
         tiles=req.hand_tiles,
         seat_wind=req.seat_wind,
-        prevailing_wind=req.prevailing_wind
+        prevailing_wind=req.prevailing_wind,
+        open_melds=req.open_melds
     )
     return analysis
 

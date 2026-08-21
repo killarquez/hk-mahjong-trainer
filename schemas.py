@@ -80,26 +80,29 @@ class HandEvaluationResponse(BaseModel):
 
 
 class EvaluateHandRequest(BaseModel):
-    hand_tiles: List[str] = Field(..., min_length=14, max_length=14, json_schema_extra={"example": ["1m","2m","3m","4p","5p","6p","7s","8s","9s","1z","1z","1z","5z","6z"]})
+    hand_tiles: List[str] = Field(..., json_schema_extra={"example": ["1m","2m","3m","4p","5p","6p","7s","8s","9s","1z","1z","1z","5z","6z"]})
     user_discard: Optional[str] = Field(None, json_schema_extra={"example": "6z"})
     seat_wind: str = Field("1z", json_schema_extra={"example": "1z"})
     prevailing_wind: str = Field("1z", json_schema_extra={"example": "1z"})
     session_id: Optional[str] = None
+    open_melds: Optional[List[Dict[str, Any]]] = None
 
 
 class RandomHandRequest(BaseModel):
+    category: Optional[str] = Field("all", json_schema_extra={"example": "all"})
     seat_wind: str = Field("1z", json_schema_extra={"example": "1z"})
     prevailing_wind: str = Field("1z", json_schema_extra={"example": "1z"})
     session_id: Optional[str] = None
 
 
 class NextTurnRequest(BaseModel):
-    hand_tiles: List[str] = Field(..., min_length=14, max_length=14)
+    hand_tiles: List[str] = Field(...)
     discard_tile: str = Field(..., json_schema_extra={"example": "1z"})
     draw_tile: Optional[str] = None
     seat_wind: str = Field("1z")
     prevailing_wind: str = Field("1z")
     session_id: Optional[str] = None
+    open_melds: Optional[List[Dict[str, Any]]] = None
 
 
 # --- Fan Calculator & Quiz Schemas ---

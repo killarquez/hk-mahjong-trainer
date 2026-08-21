@@ -109,6 +109,8 @@ def test_user_concealed_kong():
     # Set up user holding 4 White Dragons (7z) + 10 other tiles = 14 tiles
     game.melds[1] = []
     game.hands[1] = ["1m", "2m", "3m", "4m", "5m", "6m", "7s", "8s", "9s", "1p", "7z", "7z", "7z", "7z"]
+    # Ensure replacement tile is distinct from 7z
+    game.wall[-1] = "2p"
     game.current_turn_index = 1
     game.last_discard = None
 
@@ -125,5 +127,6 @@ def test_user_concealed_kong():
     assert game.melds[1][0]["type"] == "concealed_kong"
     assert len(game.melds[1][0]["tiles"]) == 4
     assert "7z" not in game.hands[1]
+    assert len(game.hands[1]) == 11
     assert len(game.wall) == initial_wall_len - 1
     assert claim_res.get("waiting_for_user_discard") is True

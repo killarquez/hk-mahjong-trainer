@@ -106,18 +106,18 @@ def identify_hand_blocks(tiles: List[str]) -> Dict[str, Any]:
 def analyze_hand_deep_strategy(
     tiles: List[str],
     seat_wind: str = "1z",
-    prevailing_wind: str = "1z"
+    prevailing_wind: str = "1z",
+    open_melds: Optional[List[Dict[str, Any]]] = None
 ) -> Dict[str, Any]:
     """
-    Performs a deep tactical breakdown of a 14-tile hand.
-    Returns:
-    - Base evaluation (discards, outs, shanten)
-    - Structural blocks identified
-    - TVB 2026 rule constraints & Chicken hand risk analysis
-    - Ranked Tactical Lines of Play with step-by-step master advice
+    Performs full tactical strategy breakdown for a hand:
+    - Block decomposition
+    - 1-Fan minimum check
+    - Ranked tactical lines of play
+    - Full 14-discard matrix
     """
     sorted_tiles = sort_tiles(tiles)
-    eval_result = evaluate_14_hand(sorted_tiles, seat_wind, prevailing_wind)
+    eval_result = evaluate_14_hand(sorted_tiles, seat_wind, prevailing_wind, open_melds=open_melds)
     blocks_data = identify_hand_blocks(sorted_tiles)
 
     # Assess 1-Fan minimum legality & winning potential
