@@ -2520,6 +2520,19 @@
     });
   }
 
+  async function parseApiError(res, defaultMsg) {
+    try {
+      const data = await res.json();
+      return data.detail || data.message || defaultMsg;
+    } catch {
+      try {
+        const txt = await res.text();
+        if (txt) return txt;
+      } catch {}
+      return `${defaultMsg} (HTTP ${res.status})`;
+    }
+  }
+
   async function startBotGame() {
     if (autoStepTimer) clearTimeout(autoStepTimer);
     try {
@@ -2527,6 +2540,9 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
+      if (!res.ok) {
+        throw new Error(await parseApiError(res, 'Error starting match'));
+      }
       const data = await res.json();
       botGameId = data.game_id;
       renderBotGameState(data);
@@ -2548,6 +2564,9 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ game_id: botGameId })
       });
+      if (!res.ok) {
+        throw new Error(await parseApiError(res, 'Error starting next hand'));
+      }
       const data = await res.json();
       renderBotGameState(data);
       sound.playTileClick();
@@ -2573,8 +2592,7 @@
         body: JSON.stringify({ game_id: botGameId, tile })
       });
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.detail || 'Discard action failed');
+        throw new Error(await parseApiError(res, 'Discard action failed'));
       }
       const data = await res.json();
       renderBotGameState(data);
@@ -2600,8 +2618,7 @@
         body: JSON.stringify({ game_id: botGameId, action, meld })
       });
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.detail || 'Claim action failed');
+        throw new Error(await parseApiError(res, 'Claim action failed'));
       }
       const data = await res.json();
       renderBotGameState(data);
@@ -2632,8 +2649,7 @@
         body: JSON.stringify({ game_id: botGameId })
       });
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.detail || 'Bot turn step failed');
+        throw new Error(await parseApiError(res, 'Bot turn step failed'));
       }
       const data = await res.json();
       renderBotGameState(data);
