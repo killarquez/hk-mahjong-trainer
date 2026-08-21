@@ -24,6 +24,7 @@ from engine.shanten import calculate_tvb_shanten
 from engine.ukeire import calculate_ukeire_for_13
 from engine.bot_ai import MahjongBotAI
 from fan_calculator import calculate_fan
+from evaluator import evaluate_14_hand
 
 ACTIVE_TABLE_GAMES: Dict[str, "TableMatchGame"] = {}
 
