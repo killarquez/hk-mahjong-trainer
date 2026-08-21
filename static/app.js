@@ -2768,7 +2768,7 @@
     if (hud) {
       const hudShanten = document.getElementById('hud-shanten-badge');
       const hudOptText = document.getElementById('hud-optimal-discard-text');
-      const hudOutsText = document.getElementById('hud-ukeire-outs-text');
+      const hudOutsChips = document.getElementById('hud-live-outs-chips');
 
       if (hudShanten) {
         const sVal = hud.best_shanten !== undefined ? hud.best_shanten : (hud.shanten !== undefined ? hud.shanten : 0);
@@ -2780,7 +2780,7 @@
           hudOptText.innerHTML = `
             <div style="display:flex; align-items:center; gap:8px;">
               <img src="/static/tiles/${hud.optimal_discard}.png?v=4" style="width:24px; height:32px; object-fit:contain; background:#fff; border-radius:2px;" />
-              <span>Discard <strong>${hud.optimal_discard}</strong> (${hud.max_outs} live outs left in wall)</span>
+              <span>Discard <strong>${hud.optimal_discard}</strong> (${hud.max_outs || 0} live outs left in wall)</span>
             </div>
           `;
         } else {
