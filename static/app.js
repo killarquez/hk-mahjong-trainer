@@ -3010,6 +3010,13 @@
     }
   }
 
+  async function handleBotSessionLost(msg = 'Match session was reset. Starting a fresh match...') {
+    console.warn(msg);
+    botGameId = null;
+    currentBotGameState = null;
+    await startBotGame();
+  }
+
   async function startNextBotHand() {
     if (!botGameId) return;
     try {
@@ -3018,6 +3025,10 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ game_id: botGameId })
       });
+      if (res.status === 404) {
+        await handleBotSessionLost();
+        return;
+      }
       if (!res.ok) {
         throw new Error(await parseApiError(res, 'Error starting next hand'));
       }
@@ -3029,7 +3040,11 @@
         scheduleBotAutoStep();
       }
     } catch (err) {
-      alert(`Error starting next hand: ${err.message}`);
+      if (err.message && err.message.includes('not found')) {
+        await handleBotSessionLost();
+      } else {
+        alert(`Error starting next hand: ${err.message}`);
+      }
     }
   }
 
@@ -3039,6 +3054,9 @@
     stopBotShotClock(true);
     sound.playTileClick();
 
+    const claimBar = document.getElementById('bot-claim-actions-bar');
+    if (claimBar) claimBar.style.display = 'none';
+
     try {
       if (autoStepTimer) clearTimeout(autoStepTimer);
       const res = await fetch('/api/bot-game/discard', {
@@ -3046,13 +3064,21 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ game_id: botGameId, tile })
       });
+      if (res.status === 404) {
+        await handleBotSessionLost();
+        return;
+      }
       if (!res.ok) {
         throw new Error(await parseApiError(res, 'Discard action failed'));
       }
       const data = await res.json();
       renderBotGameState(data);
     } catch (err) {
-      alert(`Discard error: ${err.message}`);
+      if (err.message && err.message.includes('not found')) {
+        await handleBotSessionLost();
+      } else {
+        alert(`Discard error: ${err.message}`);
+      }
     } finally {
       isDiscardInFlight = false;
     }
@@ -3073,13 +3099,21 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ game_id: botGameId, action, meld })
       });
+      if (res.status === 404) {
+        await handleBotSessionLost();
+        return;
+      }
       if (!res.ok) {
         throw new Error(await parseApiError(res, 'Claim action failed'));
       }
       const data = await res.json();
       renderBotGameState(data);
     } catch (err) {
-      alert(`Claim error: ${err.message}`);
+      if (err.message && err.message.includes('not found')) {
+        await handleBotSessionLost();
+      } else {
+        alert(`Claim error: ${err.message}`);
+      }
     } finally {
       isClaimInFlight = false;
     }
@@ -3104,6 +3138,10 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ game_id: botGameId })
       });
+      if (res.status === 404) {
+        await handleBotSessionLost();
+        return;
+      }
       if (!res.ok) {
         throw new Error(await parseApiError(res, 'Bot turn step failed'));
       }
