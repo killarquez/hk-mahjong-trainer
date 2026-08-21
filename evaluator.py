@@ -45,7 +45,8 @@ def evaluate_14_hand(
     seat_wind: str = "1z", 
     prevailing_wind: str = "1z",
     visible_discards: Optional[List[str]] = None,
-    visible_counts: Optional[List[int]] = None
+    visible_counts: Optional[List[int]] = None,
+    allowed_discards: Optional[List[str]] = None
 ) -> Dict[str, Any]:
     """
     Evaluates all possible discards for a 14-tile hand.
@@ -58,7 +59,10 @@ def evaluate_14_hand(
         raise ValueError(f"Hand must contain a turn-discard count of tiles (14, 11, 8, 5, 2), got {len(hand_tiles)}.")
 
     counts = hand_to_counts(hand_tiles)
-    unique_tiles = [INDEX_TILE_MAP[i] for i in range(34) if counts[i] > 0]
+    if allowed_discards is not None:
+        unique_tiles = [t for t in set(allowed_discards) if counts[TILE_INDEX_MAP[t]] > 0]
+    else:
+        unique_tiles = [INDEX_TILE_MAP[i] for i in range(34) if counts[i] > 0]
 
     # Compute overall visible counts across hand + discards
     full_vis_counts = None

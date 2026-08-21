@@ -475,7 +475,7 @@ class TableMatchGame:
     def execute_bot_pong_or_kong(self, player_idx: int, tile: str, action: str):
         p_name = self.player_names[player_idx]
         if self.last_discard and len(self.rivers[self.last_discard["player_index"]]) > 0:
-            self.rivers[self.last_discard["player_index"]][-1]["is_claimed"] = True
+            self.rivers[self.last_discard["player_index"]].pop()
 
         remove_count = 2 if action == "PONG" else 3
         for _ in range(remove_count):
@@ -499,7 +499,7 @@ class TableMatchGame:
     def execute_bot_chow(self, player_idx: int, tile: str, meld: List[str]):
         p_name = self.player_names[player_idx]
         if self.last_discard and len(self.rivers[self.last_discard["player_index"]]) > 0:
-            self.rivers[self.last_discard["player_index"]][-1]["is_claimed"] = True
+            self.rivers[self.last_discard["player_index"]].pop()
 
         for t in meld:
             if t != tile:
@@ -524,6 +524,8 @@ class TableMatchGame:
                 # Ron Win (出銃 / 食胡)
                 disc_tile = self.last_discard["tile"]
                 disc_idx = self.last_discard["player_index"]
+                if len(self.rivers[disc_idx]) > 0:
+                    self.rivers[disc_idx].pop()
                 self.process_win(winner_idx=user_idx, shooter_idx=disc_idx, winning_tile=disc_tile, is_self_draw=False)
             return self.get_state()
 
@@ -533,7 +535,7 @@ class TableMatchGame:
                 disc_tile = self.last_discard["tile"]
                 disc_idx = self.last_discard["player_index"]
                 if len(self.rivers[disc_idx]) > 0:
-                    self.rivers[disc_idx][-1]["is_claimed"] = True
+                    self.rivers[disc_idx].pop()
                 for _ in range(3):
                     self.hands[user_idx].remove(disc_tile)
                 self.melds[user_idx].append({"type": "kong", "tiles": [disc_tile, disc_tile, disc_tile, disc_tile]})
@@ -647,7 +649,7 @@ class TableMatchGame:
 
         if action == "PONG":
             if len(self.rivers[disc_idx]) > 0:
-                self.rivers[disc_idx][-1]["is_claimed"] = True
+                self.rivers[disc_idx].pop()
             for _ in range(2):
                 self.hands[user_idx].remove(disc_tile)
             self.melds[user_idx].append({"type": "pong", "tiles": [disc_tile, disc_tile, disc_tile]})
@@ -664,7 +666,7 @@ class TableMatchGame:
             if not meld:
                 raise ValueError("Meld required for Chow.")
             if len(self.rivers[disc_idx]) > 0:
-                self.rivers[disc_idx][-1]["is_claimed"] = True
+                self.rivers[disc_idx].pop()
             for t in meld:
                 if t != disc_tile:
                     self.hands[user_idx].remove(t)
@@ -782,7 +784,8 @@ class TableMatchGame:
                     full_user_tiles,
                     seat_wind=self.seat_winds[1],
                     prevailing_wind=self.prevailing_wind,
-                    visible_discards=vis_discards
+                    visible_discards=vis_discards,
+                    allowed_discards=self.hands[1]
                 )
             except Exception:
                 pass

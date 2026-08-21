@@ -2550,11 +2550,16 @@
     sound.playTileClick();
 
     try {
+      if (autoStepTimer) clearTimeout(autoStepTimer);
       const res = await fetch('/api/bot-game/discard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ game_id: botGameId, tile })
       });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.detail || 'Discard action failed');
+      }
       const data = await res.json();
       renderBotGameState(data);
       isBotProcessing = false;
@@ -2570,6 +2575,9 @@
 
   async function sendBotClaimAction(action, meld) {
     if (!botGameId) return;
+    if (autoStepTimer) clearTimeout(autoStepTimer);
+    isBotProcessing = true;
+
     const bar = document.getElementById('bot-claim-actions-bar');
     if (bar) bar.style.display = 'none';
 
@@ -2579,13 +2587,19 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ game_id: botGameId, action, meld })
       });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.detail || 'Claim action failed');
+      }
       const data = await res.json();
       renderBotGameState(data);
+      isBotProcessing = false;
 
       if (!data.game_over && !data.waiting_for_user_claim && !data.waiting_for_user_discard) {
         scheduleBotAutoStep();
       }
     } catch (err) {
+      isBotProcessing = false;
       alert(`Claim error: ${err.message}`);
     }
   }
@@ -2605,6 +2619,10 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ game_id: botGameId })
       });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.detail || 'Bot turn step failed');
+      }
       const data = await res.json();
       renderBotGameState(data);
       sound.playTileClick();
@@ -2620,6 +2638,8 @@
   }
 
   function renderBotGameState(state) {
+    if (!state || !state.players) return;
+
     const roundBadge = document.getElementById('bot-game-round-badge');
     const wallCount = document.getElementById('bot-game-wall-count');
     const dealerBadge = document.getElementById('bot-game-dealer-badge');
