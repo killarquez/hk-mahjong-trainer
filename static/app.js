@@ -461,6 +461,21 @@
     StorageManager.loadAll();
     setupDOM();
     bindEvents();
+
+    const modeEl = document.getElementById('select-trainer-mode');
+    if (modeEl) trainerMode = modeEl.value || 'blind';
+    const clockEl = document.getElementById('select-shot-clock');
+    if (clockEl) shotClockDuration = parseInt(clockEl.value, 10) || 0;
+    const catEl = document.getElementById('select-trainer-category');
+    if (catEl) trainerCategory = catEl.value || 'all';
+
+    const hint = document.getElementById('trainer-mode-hint');
+    if (hint) {
+      hint.textContent = (trainerMode === 'blind') 
+        ? '🙈 Blind Mode Active: Make your decision; grade & matrix reveal after discard' 
+        : '👁️ Live Hint Mode: Full Ukeire matrix visible in real-time';
+    }
+
     initPuzzles();
     loadNewHand();
     initRulesCenter();
@@ -549,7 +564,7 @@
       if (shotClockDuration > 0 && !userHasDiscardedCurrentHand && !(currentEvaluation && currentEvaluation.is_winning_hand)) {
         startShotClock(shotClockDuration);
       } else {
-        stopShotClock();
+        stopShotClock(true);
       }
     });
 
@@ -1297,10 +1312,14 @@
     }, 1000);
   }
 
-  function stopShotClock() {
+  function stopShotClock(hide = false) {
     if (shotClockTimer) {
       clearInterval(shotClockTimer);
       shotClockTimer = null;
+    }
+    if (hide) {
+      const barContainer = document.getElementById('shot-clock-bar-container');
+      if (barContainer) barContainer.style.display = 'none';
     }
   }
 
@@ -1334,6 +1353,8 @@
         hideFeedback();
         if (shotClockDuration > 0) {
           startShotClock(shotClockDuration);
+        } else {
+          stopShotClock(true);
         }
       }
     } catch (err) {
@@ -1442,7 +1463,7 @@
   async function handleUserDiscard(tile) {
     if (currentEvaluation && currentEvaluation.is_winning_hand) return;
 
-    stopShotClock();
+    stopShotClock(true);
     sound.playTileClick();
     selectedDiscard = tile;
     userHasDiscardedCurrentHand = true;
@@ -1719,196 +1740,6 @@
     });
   }
 
-  function showVictory(evalData) {
-    sound.playVictory();
-
-    const box = document.getElementById('feedback-box');
-    if (!box) return;
-
-    box.className = `feedback-box victory`;
-    box.style.display = 'block';
-
-    const fanData = evalData.winning_fan;
-    const handName = fanData?.hand_name || '胡牌 (Winning Hand)';
-    const totalFan = fanData?.total_fan || 1;
-    const breakdown = fanData?.breakdown || [];
-
-    box.innerHTML = `
-      <div class="feedback-header" style="border-bottom:1px solid rgba(229,185,76,0.3); padding-bottom:12px; margin-bottom:14px;">
-        <div class="victory-title">
-          <span>🏆 🎉 自摸胡牌！ Winning Hand Achieved!</span>
-          <span class="victory-fan-badge">${totalFan} 番 / Fan</span>
-        </div>
-        <button id="btn-victory-next-hand" class="btn btn-victory">
-          🎲 Start Next Hand (再開一局) ➔
-        </button>
-      </div>
-
-      <div style="font-size:1.05rem; margin-bottom:12px;">
-        <strong>胡牌牌型：</strong> <span style="color:var(--accent-gold); font-size:1.15rem; font-weight:700;">${handName}</span>
-      </div>
-
-      <div style="background:rgba(0,0,0,0.35); border-radius:8px; padding:12px 16px; border:1px solid rgba(255,255,255,0.1); margin-bottom:16px;">
-        <div style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px; font-weight:600;">Scoring Breakdown (番數詳情):</div>
-        <ul style="list-style:none; padding-left:0;">
-          ${breakdown.map(b => `
-            <li style="padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center;">
-              <span><strong>${b.name}</strong> <span style="color:var(--text-muted);">(${b.jyutping})</span> - ${b.desc}</span>
-              <span style="color:var(--accent-gold); font-weight:700;">+${b.fan} 番</span>
-            </li>
-          `).join('')}
-        </ul>
-      </div>
-
-      <div style="font-size:0.9rem; color:var(--accent-emerald);">
-        ✨ 牌局已完美結束！在真實比賽中達到胡牌條件即停止打牌。點擊上方按鈕開始新一輪牌效訓練！
-      </div>
-    `;
-
-    document.getElementById('btn-victory-next-hand')?.addEventListener('click', () => {
-      sound.playTileClick();
-      loadNewHand();
-    });
-
-    renderEvaluationTable(evalData);
-  }
-
-  function showFeedback(comp) {
-    const box = document.getElementById('feedback-box');
-    if (!box) return;
-
-    box.className = `feedback-box ${comp.status}`;
-    box.style.display = 'block';
-
-    box.innerHTML = `
-      <div class="feedback-header">
-        <div id="feedback-title" class="feedback-title">${comp.status === 'optimal' ? '✨' : '⚠️'} ${comp.title_zh} (${comp.title_en})</div>
-        <button id="btn-next-turn" class="btn btn-primary" style="display:${continuousMode ? 'inline-flex' : 'none'};">
-          Draw Next Tile (摸下一張牌) ➔
-        </button>
-      </div>
-      <div id="feedback-desc" class="feedback-body">
-        <p>${comp.delta_reasoning_zh.replace(/\n/g, '<br/>')}</p>
-        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:6px;">${comp.delta_reasoning_en}</p>
-      </div>
-
-      <div class="outs-comparison-grid">
-        <div id="user-outs-card" class="outs-card">
-          <div class="outs-card-title">Your Discard: ${comp.user_discard}</div>
-          <div class="outs-card-val" style="color: ${comp.is_correct ? 'var(--accent-emerald)' : 'var(--accent-coral)'};">
-            ${comp.user_outs} Outs (${comp.user_shanten === 0 ? 'Tenpai' : comp.user_shanten + '-Shanten'})
-          </div>
-          <div class="outs-chips">
-            ${comp.user_accepted_tiles.map(t => `
-              <span class="chip-tile">
-                <img src="/static/tiles/${t.tile}.png?v=4" style="width:16px; height:20px; object-fit:contain;" />
-                ${t.tile} <span class="count">(${t.count})</span>
-              </span>
-            `).join('')}
-          </div>
-        </div>
-
-        <div id="optimal-outs-card" class="outs-card">
-          <div class="outs-card-title">Optimal Discard: ${comp.optimal_discard}</div>
-          <div class="outs-card-val" style="color: var(--accent-emerald);">
-            ${comp.best_outs} Outs (${comp.best_shanten === 0 ? 'Tenpai' : comp.best_shanten + '-Shanten'})
-          </div>
-          <div class="outs-chips">
-            ${comp.best_accepted_tiles.map(t => `
-              <span class="chip-tile">
-                <img src="/static/tiles/${t.tile}.png?v=4" style="width:16px; height:20px; object-fit:contain;" />
-                ${t.tile} <span class="count">(${t.count})</span>
-              </span>
-            `).join('')}
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.getElementById('btn-next-turn')?.addEventListener('click', () => {
-      advanceNextTurn();
-    });
-  }
-
-  function hideFeedback() {
-    const box = document.getElementById('feedback-box');
-    if (box) box.style.display = 'none';
-  }
-
-  function renderEvaluationTable(evalData, highlightedDiscard) {
-    const tbody = document.getElementById('discards-table-body');
-    if (!tbody) return;
-
-    if (evalData.is_winning_hand) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="7" style="text-align:center; padding:32px 16px; font-size:1.1rem; color:var(--accent-gold);">
-            🏆 <strong>恭喜胡牌！ (Round Complete)</strong><br/>
-            <span style="font-size:0.88rem; color:var(--text-muted);">手牌已達胡牌條件，無需再進行打牌。點擊上方「再開一局」開啟新練習。</span>
-          </td>
-        </tr>
-      `;
-      return;
-    }
-
-    tbody.innerHTML = evalData.discards.map((d, index) => {
-      const isHighlighted = (d.tile === highlightedDiscard);
-      const isOpt = d.is_optimal;
-      const shantenClass = d.shanten <= 0 ? 'shanten-0' : (d.shanten === 1 ? 'shanten-1' : 'shanten-2');
-
-      return `
-        <tr class="${isOpt ? 'row-optimal' : ''} ${isHighlighted ? 'row-user-selected' : ''}">
-          <td>
-            <span class="rank-badge ${index === 0 ? 'rank-1' : ''}">#${index + 1}</span>
-          </td>
-          <td>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <img src="/static/tiles/${d.tile}.png" alt="${d.tile}" style="width:28px; height:36px; object-fit:contain;" />
-              <div>
-                <strong style="color:${isOpt ? 'var(--accent-emerald)' : '#fff'}">${d.chinese} (${d.tile})</strong>
-                <div style="font-size:0.75rem; color:var(--text-muted);">${d.jyutping}</div>
-              </div>
-            </div>
-          </td>
-          <td>
-            <span class="shanten-badge ${shantenClass}">
-              ${d.shanten === 0 ? '🎯 聽牌 (Tenpai)' : `${d.shanten}向聽 (${d.shanten}-Shanten)`}
-            </span>
-          </td>
-          <td>
-            <strong style="font-size:1.1rem; color:var(--accent-gold);">${d.total_outs}</strong>
-            <span style="font-size:0.75rem; color:var(--text-muted);"> (${d.unique_acceptance_count} types)</span>
-          </td>
-          <td>
-            <div class="outs-chips">
-              ${d.accepted_tiles.map(t => `
-                <span class="chip-tile">
-                  <img src="/static/tiles/${t.tile}.png?v=4" style="width:14px; height:18px; object-fit:contain;" />
-                  ${t.tile}<span class="count">(${t.count})</span>
-                </span>
-              `).join('')}
-            </div>
-          </td>
-          <td>
-            <div style="font-size:0.8rem; color:var(--accent-cyan);">
-              ${d.viable_paths.slice(0, 2).map(p => p.name).join('<br/>')}
-            </div>
-          </td>
-          <td>
-            <button class="btn btn-secondary btn-try-discard" data-tile="${d.tile}" style="padding:4px 10px; font-size:0.75rem;">
-              Evaluate
-            </button>
-          </td>
-        </tr>
-      `;
-    }).join('');
-
-    tbody.querySelectorAll('.btn-try-discard').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        handleUserDiscard(e.currentTarget.dataset.tile);
-      });
-    });
-  }
 
   async function advanceNextTurn() {
     if (!selectedDiscard) return;

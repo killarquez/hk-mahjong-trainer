@@ -179,21 +179,31 @@ body {
   margin: 16px auto 0;
   padding: 0 20px;
   display: flex;
-  gap: 8px;
-  overflow-x: auto;
+  flex-wrap: wrap;
+  gap: 6px;
+  overflow: hidden;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.tab-nav::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
 }
 
 .tab-btn {
   background: rgba(8, 24, 46, 0.65);
   border: 1px solid rgba(56, 189, 248, 0.2);
   color: var(--c-cosmic-quest);
-  padding: 8px 16px;
+  padding: 8px 12px;
   border-radius: 8px 8px 0 0;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .tab-btn:hover {
