@@ -39,20 +39,32 @@ class MahjongBotAI:
         hand_14: List[str],
         prevailing_wind: str = "1z",
         visible_discards: Optional[List[str]] = None,
-        opponents_data: Optional[List[Dict[str, Any]]] = None
+        opponents_data: Optional[List[Dict[str, Any]]] = None,
+        open_melds: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
         """
-        Determines the optimal discard for a 14-tile hand.
+        Determines the optimal discard for a hand.
         Balances offensive tile efficiency (Ukeire) with defensive threat evaluation (Push/Fold).
         """
-        eval_res = evaluate_14_hand(
-            hand_tiles=hand_14,
-            seat_wind=self.seat_wind,
-            prevailing_wind=prevailing_wind,
-            visible_discards=visible_discards
-        )
+        full_tiles = list(hand_14)
+        if open_melds:
+            for m in open_melds:
+                full_tiles.extend(m["tiles"][:3])
 
-        if eval_res["is_winning_hand"]:
+        eval_res = None
+        try:
+            eval_res = evaluate_14_hand(
+                hand_tiles=full_tiles,
+                seat_wind=self.seat_wind,
+                prevailing_wind=prevailing_wind,
+                visible_discards=visible_discards,
+                allowed_discards=hand_14,
+                open_melds=open_melds
+            )
+        except Exception:
+            pass
+
+        if eval_res and eval_res.get("is_winning_hand"):
             return {
                 "action": "tsumo",
                 "tile": None,
@@ -166,9 +178,9 @@ class MahjongBotAI:
             }
 
         # Offensive Branch: Pure Mathematical Efficiency (Push / 進攻)
-        chosen_tile = eval_res.get("optimal_discard") or (hand_14[-1] if hand_14 else "1m")
-        best_shanten = eval_res.get("best_shanten", 99)
-        max_outs = eval_res.get("max_outs", 0)
+        chosen_tile = (eval_res.get("optimal_discard") if eval_res else None) or (hand_14[-1] if hand_14 else "1m")
+        best_shanten = eval_res.get("best_shanten", 99) if eval_res else 99
+        max_outs = eval_res.get("max_outs", 0) if eval_res else 0
 
         return {
             "action": "discard",

@@ -476,7 +476,8 @@ class TableMatchGame:
             hand_14=self.hands[curr_idx],
             prevailing_wind=self.prevailing_wind,
             visible_discards=self.get_all_visible_discards(),
-            opponents_data=opponents_data
+            opponents_data=opponents_data,
+            open_melds=self.melds[curr_idx]
         )
 
         if bot_res["is_win"]:
@@ -521,7 +522,12 @@ class TableMatchGame:
             self.drawn_tile = drawn
 
         bot = self.bots[player_idx]
-        bot_res = bot.select_discard(self.hands[player_idx], self.prevailing_wind, self.get_all_visible_discards())
+        bot_res = bot.select_discard(
+            hand_14=self.hands[player_idx],
+            prevailing_wind=self.prevailing_wind,
+            visible_discards=self.get_all_visible_discards(),
+            open_melds=self.melds[player_idx]
+        )
         self.execute_discard(player_idx, bot_res["tile"])
 
     def execute_bot_chow(self, player_idx: int, tile: str, meld: List[str]):
@@ -536,7 +542,12 @@ class TableMatchGame:
         self.match_logs.append(f"⚡ {p_name} called Chow on {TILE_INFO_MAP[tile]['chinese']} ({tile})!")
         self.current_turn_index = player_idx
         bot = self.bots[player_idx]
-        bot_res = bot.select_discard(self.hands[player_idx], self.prevailing_wind, self.get_all_visible_discards())
+        bot_res = bot.select_discard(
+            hand_14=self.hands[player_idx],
+            prevailing_wind=self.prevailing_wind,
+            visible_discards=self.get_all_visible_discards(),
+            open_melds=self.melds[player_idx]
+        )
         self.execute_discard(player_idx, bot_res["tile"])
 
     def execute_user_claim(self, action: str, meld: Optional[Any] = None) -> Dict[str, Any]:
