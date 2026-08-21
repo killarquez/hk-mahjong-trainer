@@ -186,7 +186,8 @@ class MahjongBotAI:
         discarded_tile: str,
         discarder_seat: str,
         prevailing_wind: str = "1z",
-        visible_discards: Optional[List[str]] = None
+        visible_discards: Optional[List[str]] = None,
+        melds: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
         """
         Evaluates whether the bot should claim a discarded tile for:
@@ -200,25 +201,31 @@ class MahjongBotAI:
         d_idx = TILE_INDEX_MAP[discarded_tile]
 
         # 1. Check WIN (Ron / 胡牌)
-        counts[d_idx] += 1
-        shanten_eval = calculate_tvb_shanten(counts, self.seat_wind, prevailing_wind)
-        counts[d_idx] -= 1
+        full_test_tiles = list(hand_13)
+        if melds:
+            for m in melds:
+                full_test_tiles.extend(m["tiles"][:3])
+        full_test_tiles.append(discarded_tile)
 
-        if shanten_eval["shanten"] == -1:
-            fan_res = calculate_fan(
-                tiles=sort_tiles(hand_13 + [discarded_tile]),
-                is_self_draw=False,
-                prevailing_wind=prevailing_wind,
-                seat_wind=self.seat_wind
-            )
-            if fan_res["is_valid_win"] and fan_res["total_fan"] >= 1:
-                return {
-                    "action": "WIN",
-                    "tile": discarded_tile,
-                    "fan": fan_res["total_fan"],
-                    "hand_name": fan_res["hand_name"],
-                    "meld": [discarded_tile]
-                }
+        if len(full_test_tiles) == 14:
+            try:
+                fan_res = calculate_fan(
+                    tiles=sort_tiles(full_test_tiles),
+                    winning_tile=discarded_tile,
+                    is_self_draw=False,
+                    prevailing_wind=prevailing_wind,
+                    seat_wind=self.seat_wind
+                )
+                if fan_res.get("is_valid_win") and fan_res.get("total_fan", 0) >= 1:
+                    return {
+                        "action": "WIN",
+                        "tile": discarded_tile,
+                        "fan": fan_res["total_fan"],
+                        "hand_name": fan_res["hand_name"],
+                        "meld": [discarded_tile]
+                    }
+            except Exception:
+                pass
 
         # 2. Check Pong & Kong
         held_count = counts[d_idx]

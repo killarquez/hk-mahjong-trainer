@@ -59,13 +59,46 @@ class TableMatchGame:
         self.last_discard: Optional[Dict[str, Any]] = None # {player_index: int, tile: str}
         self.user_passed_last_discard = False
         self.game_over = False
+        self.match_over = False
         self.winner_info: Optional[Dict[str, Any]] = None
+        self.final_standings: List[Dict[str, Any]] = []
         self.match_logs: List[str] = []
 
         self.start_new_hand()
 
+    def compute_final_standings(self) -> List[Dict[str, Any]]:
+        """Computes final 16-hand tournament standings ranked 1st through 4th."""
+        ranked = []
+        for i in range(4):
+            ranked.append({
+                "player_index": i,
+                "name": self.player_names[i],
+                "is_human": self.is_human[i],
+                "seat_wind": self.seat_winds[i],
+                "score": self.scores[i],
+                "score_delta": self.scores[i] - 500
+            })
+        ranked.sort(key=lambda x: x["score"], reverse=True)
+        for rank_idx, item in enumerate(ranked):
+            item["rank"] = rank_idx + 1
+            if rank_idx == 0:
+                item["rank_title"] = "🥇 冠軍 (Champion)"
+            elif rank_idx == 1:
+                item["rank_title"] = "🥈 亞軍 (1st Runner-Up)"
+            elif rank_idx == 2:
+                item["rank_title"] = "🥉 季軍 (2nd Runner-Up)"
+            else:
+                item["rank_title"] = "4th 殿軍 (4th Place)"
+        return ranked
+
     def start_new_hand(self):
         """Shuffles 136 tiles and deals 13 tiles to each player with dynamic Wind and Seating updates."""
+        if self.hand_number > 16:
+            self.match_over = True
+            self.game_over = True
+            self.final_standings = self.compute_final_standings()
+            return
+
         self.wall = create_shuffled_wall()
         self.hands = [[], [], [], []]
         self.melds = [[], [], [], []]
@@ -128,19 +161,16 @@ class TableMatchGame:
         d_idx = TILE_INDEX_MAP[discarded_tile]
 
         # 1. Check Win (Ron / 出銃)
-        test_counts = list(counts)
-        test_counts[d_idx] += 1
-        sh_res = calculate_tvb_shanten(test_counts, self.seat_winds[user_idx], self.prevailing_wind)
         can_win = False
         win_fan = 0
         hand_name = ""
-        if sh_res["shanten"] == -1:
-            try:
-                full_test_tiles = list(user_hand)
-                for m in self.melds[user_idx]:
-                    full_test_tiles.extend(m["tiles"][:3])
-                full_test_tiles.append(discarded_tile)
+        try:
+            full_test_tiles = list(user_hand)
+            for m in self.melds[user_idx]:
+                full_test_tiles.extend(m["tiles"][:3])
+            full_test_tiles.append(discarded_tile)
 
+            if len(full_test_tiles) == 14:
                 fan_res = calculate_fan(
                     tiles=sort_tiles(full_test_tiles),
                     winning_tile=discarded_tile,
@@ -148,12 +178,12 @@ class TableMatchGame:
                     prevailing_wind=self.prevailing_wind,
                     seat_wind=self.seat_winds[user_idx]
                 )
-                if fan_res["is_valid_win"] and fan_res["total_fan"] >= 1:
+                if fan_res.get("is_valid_win") and fan_res.get("total_fan", 0) >= 1:
                     can_win = True
                     win_fan = fan_res["total_fan"]
                     hand_name = fan_res["hand_name"]
-            except Exception:
-                pass
+        except Exception:
+            pass
 
         # 2. Check Pong (碰)
         can_pong = (counts[d_idx] >= 2)
@@ -245,8 +275,10 @@ class TableMatchGame:
                 if not self.is_human[b_idx]:
                     bot = self.bots[b_idx]
                     b_hand = self.hands[b_idx]
+                    b_melds = self.melds[b_idx]
                     claim = bot.evaluate_claim(
                         hand_13=b_hand,
+                        melds=b_melds,
                         discarded_tile=disc_tile,
                         discarder_seat=self.seat_winds[disc_idx],
                         prevailing_wind=self.prevailing_wind,
@@ -304,23 +336,20 @@ class TableMatchGame:
             win_fan = 0
             hand_name = ""
             if len(full_user_tiles) == 14:
-                counts = hand_to_counts(full_user_tiles)
-                sh_res = calculate_tvb_shanten(counts, self.seat_winds[curr_idx], self.prevailing_wind)
-                if sh_res["shanten"] == -1:
-                    try:
-                        fan_res = calculate_fan(
-                            tiles=full_user_tiles,
-                            winning_tile=drawn or self.hands[curr_idx][-1],
-                            is_self_draw=True,
-                            prevailing_wind=self.prevailing_wind,
-                            seat_wind=self.seat_winds[curr_idx]
-                        )
-                        if fan_res["is_valid_win"] and fan_res["total_fan"] >= 1:
-                            can_win = True
-                            win_fan = fan_res["total_fan"]
-                            hand_name = fan_res["hand_name"]
-                    except Exception:
-                        pass
+                try:
+                    fan_res = calculate_fan(
+                        tiles=full_user_tiles,
+                        winning_tile=drawn or self.hands[curr_idx][-1],
+                        is_self_draw=True,
+                        prevailing_wind=self.prevailing_wind,
+                        seat_wind=self.seat_winds[curr_idx]
+                    )
+                    if fan_res.get("is_valid_win") and fan_res.get("total_fan", 0) >= 1:
+                        can_win = True
+                        win_fan = fan_res["total_fan"]
+                        hand_name = fan_res["hand_name"]
+                except Exception:
+                    pass
 
             # 2. Check Promoted Kong (加槓) and Concealed Kong (暗槓)
             can_kong = False
@@ -573,30 +602,27 @@ class TableMatchGame:
 
             user_self_draw_claim = None
             if len(full_user_tiles) == 14:
-                counts = hand_to_counts(full_user_tiles)
-                sh_res = calculate_tvb_shanten(counts, self.seat_winds[user_idx], self.prevailing_wind)
-                if sh_res["shanten"] == -1:
-                    try:
-                        fan_res = calculate_fan(
-                            tiles=full_user_tiles,
-                            winning_tile=drawn or self.hands[user_idx][-1],
-                            is_self_draw=True,
-                            prevailing_wind=self.prevailing_wind,
-                            seat_wind=self.seat_winds[user_idx]
-                        )
-                        if fan_res["is_valid_win"] and fan_res["total_fan"] >= 1:
-                            user_self_draw_claim = {
-                                "can_win": True,
-                                "is_self_draw": True,
-                                "win_fan": fan_res["total_fan"],
-                                "hand_name": f"{fan_res['hand_name']} (槓上開花 / Kong Bloom)",
-                                "can_pong": False,
-                                "can_kong": False,
-                                "can_chow": False,
-                                "chow_options": []
-                            }
-                    except Exception:
-                        pass
+                try:
+                    fan_res = calculate_fan(
+                        tiles=full_user_tiles,
+                        winning_tile=drawn or self.hands[user_idx][-1],
+                        is_self_draw=True,
+                        prevailing_wind=self.prevailing_wind,
+                        seat_wind=self.seat_winds[user_idx]
+                    )
+                    if fan_res.get("is_valid_win") and fan_res.get("total_fan", 0) >= 1:
+                        user_self_draw_claim = {
+                            "can_win": True,
+                            "is_self_draw": True,
+                            "win_fan": fan_res["total_fan"],
+                            "hand_name": f"{fan_res['hand_name']} (槓上開花 / Kong Bloom)",
+                            "can_pong": False,
+                            "can_kong": False,
+                            "can_chow": False,
+                            "chow_options": []
+                        }
+                except Exception:
+                    pass
 
             resp = {
                 **self.get_state(),
@@ -719,6 +745,10 @@ class TableMatchGame:
         # Advance dealer on every hand (TVB 過莊規則)
         self.dealer_index = (self.dealer_index + 1) % 4
         self.hand_number += 1
+        if self.hand_number > 16:
+            self.match_over = True
+            self.final_standings = self.compute_final_standings()
+            self.match_logs.append("🏆 16-Hand Tournament Match Complete! (16盤大會賽事全部結束，進行總結算)")
 
     def process_exhaust_draw(self):
         """Handles Exhaust Draw (摸和 / 流局) when wall reaches 0."""
@@ -731,6 +761,10 @@ class TableMatchGame:
         }
         self.dealer_index = (self.dealer_index + 1) % 4
         self.hand_number += 1
+        if self.hand_number > 16:
+            self.match_over = True
+            self.final_standings = self.compute_final_standings()
+            self.match_logs.append("🏆 16-Hand Tournament Match Complete! (16盤大會賽事全部結束，進行總結算)")
 
     def get_state(self) -> Dict[str, Any]:
         """Returns the full table match state for the frontend."""
@@ -764,9 +798,14 @@ class TableMatchGame:
             except Exception:
                 pass
 
+        displayed_hand_num = min(16, self.hand_number) if not self.match_over else 16
+
         return {
             "game_id": self.game_id,
-            "hand_number": self.hand_number,
+            "hand_number": displayed_hand_num,
+            "is_final_hand": (self.hand_number == 16 or self.match_over),
+            "match_over": self.match_over,
+            "final_standings": self.final_standings if self.match_over else None,
             "prevailing_wind": self.prevailing_wind,
             "dealer_index": self.dealer_index,
             "current_turn_index": self.current_turn_index,

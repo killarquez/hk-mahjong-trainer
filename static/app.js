@@ -2466,6 +2466,12 @@
       startBotGame();
     });
 
+    document.getElementById('btn-restart-tournament')?.addEventListener('click', () => {
+      const podium = document.getElementById('bot-tournament-podium-modal');
+      if (podium) podium.style.display = 'none';
+      startBotGame();
+    });
+
     document.getElementById('btn-toggle-bot-hud')?.addEventListener('click', () => {
       isBotHudVisible = !isBotHudVisible;
       const hudEl = document.getElementById('bot-efficiency-hud-panel');
@@ -2636,6 +2642,12 @@
       const badge = document.getElementById(`badge-p${idx}`);
       const score = document.getElementById(`score-p${idx}`);
       const seat = document.getElementById(`seat-p${idx}`);
+      const dealerTag = document.getElementById(`dealer-tag-p${idx}`);
+      const isDealer = (state.dealer_index === idx);
+
+      if (dealerTag) {
+        dealerTag.style.display = isDealer ? 'inline-flex' : 'none';
+      }
 
       if (badge) {
         if (state.current_turn_index === idx) {
@@ -2643,12 +2655,17 @@
         } else {
           badge.classList.remove('active-turn');
         }
+        if (isDealer) {
+          badge.classList.add('is-dealer-station');
+        } else {
+          badge.classList.remove('is-dealer-station');
+        }
       }
       if (score) score.textContent = `${p.score} pts`;
       if (seat) {
         const windMap = { '1z': '東', '2z': '南', '3z': '西', '4z': '北' };
         seat.textContent = windMap[p.seat_wind] || '東';
-        if (state.dealer_index === idx) {
+        if (isDealer) {
           seat.classList.add('dealer');
         } else {
           seat.classList.remove('dealer');
@@ -2720,66 +2737,43 @@
     }
 
     const claimBar = document.getElementById('bot-claim-actions-bar');
+    const claimPrompt = state.user_claim_prompt;
     if (claimBar) {
-      if (state.user_claim_prompt && state.waiting_for_user_claim) {
+      if (state.waiting_for_user_claim && claimPrompt) {
         claimBar.style.display = 'flex';
-        const prompt = state.user_claim_prompt;
-
         const winBtn = document.getElementById('btn-claim-win');
         const pongBtn = document.getElementById('btn-claim-pong');
         const kongBtn = document.getElementById('btn-claim-kong');
         const chowBtn = document.getElementById('btn-claim-chow');
+        const fanBadge = document.getElementById('claim-win-fan-badge');
 
         if (winBtn) {
-          winBtn.style.display = prompt.can_win ? 'flex' : 'none';
-          const winTitle = prompt.is_self_draw ? '🀄 自摸 (Self-Draw Win!)' : '🀄 胡 (Ron Win!)';
-          winBtn.innerHTML = `
-            ${winTitle} <span id="claim-win-fan-badge" class="badge" style="background:#fff; color:#b91c1c; font-size:0.75rem;">${prompt.win_fan}番 (${prompt.hand_name})</span>
-          `;
-        }
-        if (pongBtn) pongBtn.style.display = prompt.can_pong ? 'flex' : 'none';
-        if (kongBtn) {
-          kongBtn.style.display = prompt.can_kong ? 'flex' : 'none';
-          if (prompt.can_kong) {
-            const kOpt = prompt.kong_options && prompt.kong_options.length > 0 ? prompt.kong_options[0] : null;
-            const kDesc = kOpt?.desc ? ` (${kOpt.desc})` : '';
-            kongBtn.innerHTML = `槓 (Kong)${kDesc ? ` <span class="badge" style="background:#fff; color:#047857; font-size:0.75rem;">${kDesc}</span>` : ''}`;
-            kongBtn.onclick = () => {
-              sendBotClaimAction('KONG', kOpt);
-            };
+          winBtn.style.display = claimPrompt.can_win ? 'inline-flex' : 'none';
+          if (fanBadge) fanBadge.textContent = `${claimPrompt.win_fan || 1}番`;
+          if (claimPrompt.is_self_draw) {
+            winBtn.innerHTML = `🀄 自摸 (Self-Draw) <span class="badge" style="background:#fff; color:#b91c1c; font-size:0.75rem;">${claimPrompt.win_fan || 1}番</span>`;
+          } else {
+            winBtn.innerHTML = `🀄 胡 (Win / Ron) <span class="badge" style="background:#fff; color:#b91c1c; font-size:0.75rem;">${claimPrompt.win_fan || 1}番</span>`;
           }
         }
-        if (chowBtn) {
-          chowBtn.style.display = prompt.can_chow ? 'flex' : 'none';
-          if (prompt.can_chow && prompt.chow_options?.length > 0) {
-            chowBtn.onclick = () => {
-              sendBotClaimAction('CHOW', prompt.chow_options[0]);
-            };
-          }
-        }
+        if (pongBtn) pongBtn.style.display = claimPrompt.can_pong ? 'inline-flex' : 'none';
+        if (kongBtn) kongBtn.style.display = claimPrompt.can_kong ? 'inline-flex' : 'none';
+        if (chowBtn) chowBtn.style.display = claimPrompt.can_chow ? 'inline-flex' : 'none';
       } else {
         claimBar.style.display = 'none';
       }
     }
 
-    const hudShanten = document.getElementById('hud-shanten-badge');
-    const hudOptText = document.getElementById('hud-optimal-discard-text');
-    const hudOutsChips = document.getElementById('hud-live-outs-chips');
+    const hud = state.user_efficiency_hud;
+    if (hud) {
+      const hudShanten = document.getElementById('hud-shanten-badge');
+      const hudOptText = document.getElementById('hud-optimal-discard-text');
+      const hudOutsText = document.getElementById('hud-ukeire-outs-text');
 
-    if (state.user_efficiency_hud) {
-      const hud = state.user_efficiency_hud;
       if (hudShanten) {
         const sVal = hud.best_shanten !== undefined ? hud.best_shanten : (hud.shanten !== undefined ? hud.shanten : 0);
-        if (sVal === -1) {
-          hudShanten.textContent = '🎉 胡牌 (Complete Hand!)';
-          hudShanten.className = 'shanten-badge shanten-0';
-        } else if (sVal === 0) {
-          hudShanten.textContent = '🎯 聽牌 (Tenpai)';
-          hudShanten.className = 'shanten-badge shanten-0';
-        } else {
-          hudShanten.textContent = hud.shanten_text || `${sVal}向聽 (${sVal}-Shanten)`;
-          hudShanten.className = `shanten-badge shanten-${Math.min(2, Math.max(0, sVal))}`;
-        }
+        hudShanten.textContent = sVal === 0 ? '🎯 Tenpai (聽牌)' : (sVal === -1 ? '🎉 Complete (胡牌)' : `${sVal}-Shanten (${sVal}向聽)`);
+        hudShanten.className = `shanten-badge shanten-${Math.max(0, sVal)}`;
       }
       if (hudOptText) {
         if (hud.optimal_discard) {

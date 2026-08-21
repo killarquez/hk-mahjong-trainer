@@ -2139,6 +2139,95 @@ tr.row-optimal {
   transform: scale(1.05) !important;
 }
 
+/* =========================================================================
+   Prominent High-Visibility Dealer Marker & Tournament Podium Styling
+   ========================================================================= */
+.dealer-badge-prominent {
+  background: linear-gradient(135deg, #e11d48 0%, #9f1239 100%);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.72rem;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid #fecdd3;
+  box-shadow: 0 0 12px rgba(225, 29, 72, 0.8);
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  animation: pulse-dealer-tag 2s infinite ease-in-out;
+}
 
+@keyframes pulse-dealer-tag {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 8px rgba(225, 29, 72, 0.6);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 18px rgba(225, 29, 72, 1);
+  }
+}
 
+.player-card-badge.is-dealer-station {
+  border-color: #f43f5e !important;
+  background: rgba(225, 29, 72, 0.22) !important;
+  box-shadow: 0 0 14px rgba(244, 63, 94, 0.5) !important;
+}
 
+/* 16-Hand Tournament Podium Modal */
+.tournament-podium-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.tournament-podium-card {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 2px solid #f59e0b;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(245, 158, 11, 0.4);
+  border-radius: 20px;
+  max-width: 650px;
+  width: 100%;
+  padding: 32px 24px;
+  color: #fff;
+  text-align: center;
+  animation: modal-enter 0.3s ease-out;
+}
+
+.podium-standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  text-align: left;
+}
+
+.podium-standings-table th {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  color: #f59e0b;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.podium-standings-table td {
+  padding: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.95rem;
+}
+
+.podium-row-1st {
+  background: rgba(245, 158, 11, 0.18);
+  font-weight: 800;
+}
+
+.podium-row-human {
+  border-left: 4px solid #38bdf8;
+}

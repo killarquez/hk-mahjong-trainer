@@ -20,6 +20,12 @@ export class BotGameManager {
       this.startMatch();
     });
 
+    document.getElementById('btn-restart-tournament')?.addEventListener('click', () => {
+      const podium = document.getElementById('bot-tournament-podium-modal');
+      if (podium) podium.style.display = 'none';
+      this.startMatch();
+    });
+
     // Toggle HUD button
     document.getElementById('btn-toggle-bot-hud')?.addEventListener('click', () => {
       this.isHudVisible = !this.isHudVisible;
@@ -215,6 +221,12 @@ export class BotGameManager {
       const badge = document.getElementById(`badge-p${idx}`);
       const score = document.getElementById(`score-p${idx}`);
       const seat = document.getElementById(`seat-p${idx}`);
+      const dealerTag = document.getElementById(`dealer-tag-p${idx}`);
+      const isDealer = (state.dealer_index === idx);
+
+      if (dealerTag) {
+        dealerTag.style.display = isDealer ? 'inline-flex' : 'none';
+      }
 
       if (badge) {
         if (state.current_turn_index === idx) {
@@ -222,13 +234,18 @@ export class BotGameManager {
         } else {
           badge.classList.remove('active-turn');
         }
+        if (isDealer) {
+          badge.classList.add('is-dealer-station');
+        } else {
+          badge.classList.remove('is-dealer-station');
+        }
       }
       if (score) score.textContent = `${p.score} pts`;
       if (seat) {
         const windMap: { [k: string]: string } = isZh ? { '1z': '東', '2z': '南', '3z': '西', '4z': '北' } : { '1z': 'E', '2z': 'S', '3z': 'W', '4z': 'N' };
         const windChar = windMap[p.seat_wind] || (isZh ? '東' : 'E');
         seat.textContent = windChar;
-        if (state.dealer_index === idx) {
+        if (isDealer) {
           seat.classList.add('dealer');
         } else {
           seat.classList.remove('dealer');
@@ -472,6 +489,45 @@ export class BotGameManager {
         } else {
           sound.playWarning();
         }
+      }
+
+      // Check if 16-hand match has completed
+      const nextBtn = document.getElementById('btn-modal-next-hand');
+      if (state.match_over && state.final_standings) {
+        const podiumModal = document.getElementById('bot-tournament-podium-modal');
+        const tbody = document.getElementById('podium-standings-tbody');
+        if (tbody) {
+          tbody.innerHTML = state.final_standings.map((p: any, rIdx: number) => {
+            const deltaColor = p.score_delta > 0 ? '#10b981' : (p.score_delta < 0 ? '#ef4444' : '#9ca3af');
+            return `
+              <tr class="${rIdx === 0 ? 'podium-row-1st' : ''} ${p.is_human ? 'podium-row-human' : ''}">
+                <td><strong style="color:${rIdx === 0 ? '#f59e0b' : '#fff'}; font-size:1.05rem;">${p.rank_title}</strong></td>
+                <td><strong>${p.name}</strong> ${p.is_human ? '<span class="badge" style="background:#0284c7; color:#fff; font-size:0.68rem; margin-left:4px;">YOU</span>' : ''}</td>
+                <td><span class="seat-wind-pill" style="display:inline-flex; width:22px; height:22px; font-size:0.75rem;">${p.seat_wind}</span></td>
+                <td style="font-size:1.15rem; font-weight:800; color:#f59e0b;">${p.score} pts</td>
+                <td style="font-weight:700; color:${deltaColor};">
+                  ${p.score_delta > 0 ? `+${p.score_delta}` : p.score_delta}
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+
+        if (nextBtn) {
+          nextBtn.innerHTML = isZh ? '🏆 查看大會總結算 (View Standings)' : '🏆 View Tournament Final Standings';
+          nextBtn.onclick = () => {
+            if (endModal) endModal.style.display = 'none';
+            if (podiumModal) podiumModal.style.display = 'flex';
+            sound.playVictory();
+          };
+        }
+      } else if (nextBtn) {
+        const currentHand = state.hand_number || 1;
+        nextBtn.innerHTML = isZh ? `進入第 ${currentHand + 1}/16 盤 ➡️` : `Next Hand ➡️ (Hand #${currentHand + 1}/16)`;
+        nextBtn.onclick = () => {
+          if (endModal) endModal.style.display = 'none';
+          this.startNextHand();
+        };
       }
     }
   }
