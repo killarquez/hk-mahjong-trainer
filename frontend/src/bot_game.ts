@@ -203,7 +203,7 @@ export class BotGameManager {
       { '1z': 'East Round', '2z': 'South Round', '3z': 'West Round', '4z': 'North Round' };
 
     if (roundBadge) roundBadge.textContent = `🀄 ${windNames[state.prevailing_wind] || '東風圈'} • ${isZh ? '第' + (state.hand_number || 1) + '局' : 'Hand #' + (state.hand_number || 1)}/16`;
-    if (wallCount) wallCount.textContent = `${state.remaining_wall_count ?? 0} ${isZh ? '張剩餘' : 'Tiles Left'}`;
+    if (wallCount) wallCount.textContent = `${state.remaining_wall_count ?? 0}`;
     if (dealerBadge) dealerBadge.textContent = `${isZh ? '庄' : 'Dealer'}: ${state.players ? state.players[state.dealer_index]?.name : ''}`;
 
     const centerWind = document.getElementById('table-center-wind');
@@ -225,7 +225,7 @@ export class BotGameManager {
       const isDealer = (state.dealer_index === idx);
 
       if (dealerTag) {
-        dealerTag.style.display = isDealer ? 'inline-flex' : 'none';
+        dealerTag.style.display = isDealer ? 'inline-block' : 'none';
       }
 
       if (badge) {

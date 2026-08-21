@@ -2625,7 +2625,7 @@
 
     const windNames = { '1z': '東風圈 (East)', '2z': '南風圈 (South)', '3z': '西風圈 (West)', '4z': '北風圈 (North)' };
     if (roundBadge) roundBadge.textContent = `🀄 ${windNames[state.prevailing_wind] || '東風圈'} • Hand #${state.hand_number || 1}/16`;
-    if (wallCount) wallCount.textContent = `${state.remaining_wall_count ?? 0} Tiles Left`;
+    if (wallCount) wallCount.textContent = `${state.remaining_wall_count ?? 0}`;
     if (dealerBadge) dealerBadge.textContent = `庄 Dealer: ${state.players ? state.players[state.dealer_index]?.name : ''}`;
 
     const centerWind = document.getElementById('table-center-wind');
@@ -2646,7 +2646,7 @@
       const isDealer = (state.dealer_index === idx);
 
       if (dealerTag) {
-        dealerTag.style.display = isDealer ? 'inline-flex' : 'none';
+        dealerTag.style.display = isDealer ? 'inline-block' : 'none';
       }
 
       if (badge) {

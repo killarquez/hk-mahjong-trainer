@@ -1619,6 +1619,7 @@ tr.row-optimal {
   border-radius: 20px;
   font-size: 0.85rem;
   backdrop-filter: blur(4px);
+  white-space: nowrap;
 }
 
 .player-card-badge.active-turn {
@@ -2140,39 +2141,20 @@ tr.row-optimal {
 }
 
 /* =========================================================================
-   Prominent High-Visibility Dealer Marker & Tournament Podium Styling
+   Dealer Dot & Tournament Podium Styling
    ========================================================================= */
-.dealer-badge-prominent {
-  background: linear-gradient(135deg, #e11d48 0%, #9f1239 100%);
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 0.72rem;
-  padding: 3px 9px;
-  border-radius: 999px;
-  border: 1px solid #fecdd3;
-  box-shadow: 0 0 12px rgba(225, 29, 72, 0.8);
-  letter-spacing: 0.5px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  animation: pulse-dealer-tag 2s infinite ease-in-out;
-}
-
-@keyframes pulse-dealer-tag {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 8px rgba(225, 29, 72, 0.6);
-  }
-  50% {
-    transform: scale(1.08);
-    box-shadow: 0 0 18px rgba(225, 29, 72, 1);
-  }
+.dealer-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #ef4444, 0 0 12px rgba(239, 68, 68, 0.8);
+  display: inline-block;
+  flex-shrink: 0;
 }
 
 .player-card-badge.is-dealer-station {
-  border-color: #f43f5e !important;
-  background: rgba(225, 29, 72, 0.22) !important;
-  box-shadow: 0 0 14px rgba(244, 63, 94, 0.5) !important;
+  border-color: rgba(244, 63, 94, 0.6) !important;
 }
 
 /* 16-Hand Tournament Podium Modal */
