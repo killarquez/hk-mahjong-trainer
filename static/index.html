@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hong Kong Mahjong Efficiency Trainer (TVB 2026 Rules)</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand" id="brand-home-link" style="cursor:pointer;" title="Return to Home Portal">
+        <span class="brand-icon">🀄</span>
+        <div class="brand-titles">
+          <h1>Hong Kong Mahjong Efficiency Trainer</h1>
+          <div class="brand-subtitle">TVB LA Championship 2026 Rules • 1-Fan Minimum • Zero Flowers</div>
+        </div>
+      </div>
+
+      <div class="header-stats">
+        <div class="badge">TVB 2026 Strict</div>
+        <div class="stat-chip">
+          <span>Accuracy:</span>
+          <span id="stat-accuracy" class="val">100%</span>
+        </div>
+        <div class="stat-chip">
+          <span>Streak:</span>
+          <span id="stat-streak" class="val">0 🔥</span>
+        </div>
+        <div class="stat-chip">
+          <span>Hands:</span>
+          <span id="stat-total-moves" class="val">0</span>
+        </div>
+        <button id="btn-sound-toggle" class="btn-icon" title="Toggle Sound">🔊 Audio On</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Nav Tabs -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="tab-home">🏠 Home Portal</button>
+    <button class="tab-btn" data-tab="tab-trainer">🎯 Discard Trainer</button>
+    <button class="tab-btn" data-tab="tab-bots">🤖 Play vs AI Bots</button>
+    <button class="tab-btn" data-tab="tab-puzzles">🧩 Tactical Puzzles</button>
+    <button class="tab-btn" data-tab="tab-builder">✏️ Hand Builder</button>
+    <button class="tab-btn" data-tab="tab-defense">🛡️ Defense Center</button>
+    <button class="tab-btn" data-tab="tab-fan">🧮 Fan Master & Quiz</button>
+    <button class="tab-btn" data-tab="tab-rules">📜 TVB Rules</button>
+  </nav>
+
+  <!-- Main Views Container -->
+  <main class="main-container">
+    <!-- TAB 0: HOME PORTAL / LANDING PAGE -->
+    <section id="tab-home" class="view-section active">
+      <!-- Hero Banner -->
+      <div class="landing-hero">
+        <div class="hero-badge">🏆 2026 TVB LA Championship Edition • US Station (TVB 麻將健腦大賽)</div>
+        <h1 class="hero-title">Hong Kong Mahjong Efficiency & Tactical Trainer</h1>
+        <div class="hero-subtitle-zh">香港麻將牌效訓練與戰術分析系統</div>
+        <p class="hero-desc">
+          Master the mathematical science of Mahjong tile efficiency (向聽數 & 進張數). Evaluate optimal discards in real-time, maximize winning tile acceptance (Ukeire), practice continuous turns against strict 1-Fan minimum tournament constraints, and solve tactical dilemmas.
+        </p>
+        <div class="hero-actions">
+          <button class="hero-btn-primary" data-navigate="tab-trainer">
+            🎯 Launch Discard Trainer (開始牌效訓練)
+          </button>
+          <button class="hero-btn-secondary" data-navigate="tab-puzzles">
+            🧩 Practice Tactical Puzzles (戰術殘局)
+          </button>
+        </div>
+      </div>
+
+      <!-- Feature Portal Launchers Grid -->
+      <div class="portal-grid">
+        <!-- Card 1: Discard Trainer -->
+        <div class="portal-card" data-navigate="tab-trainer">
+          <div>
+            <div class="portal-card-header">
+              <div class="portal-card-icon">🀄</div>
+              <div class="portal-card-titles">
+                <h3>Discard Efficiency Trainer</h3>
+                <div class="zh-title">牌效與向聽訓練器</div>
+              </div>
+            </div>
+            <p class="portal-card-desc">
+              Deal random 14-tile tournament hands from a 136-tile wall. Instantly evaluate the mathematical delta of every discard choice with full Ukeire outs matrix.
+            </p>
+            <ul class="portal-card-features">
+              <li>Instant optimal vs suboptimal delta calculations</li>
+              <li>Continuous practice mode (draw turn-by-turn until win)</li>
+              <li>Tactile Web Audio sound effects & keyboard shortcuts (1-9)</li>
+              <li>Agari winning hand celebration & Fan breakdown</li>
+            </ul>
+          </div>
+          <div class="portal-card-btn">
+            <span>Enter Trainer</span>
+            <span>➔</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Tactical Puzzles -->
+        <div class="portal-card" data-navigate="tab-puzzles">
+          <div>
+            <div class="portal-card-header">
+              <div class="portal-card-icon">🧩</div>
+              <div class="portal-card-titles">
+                <h3>Tactical Benchmark Puzzles</h3>
+                <div class="zh-title">大賽經典戰術殘局</div>
+              </div>
+            </div>
+            <p class="portal-card-desc">
+              Curated tactical dilemmas testing complex multi-sided waits (五面聽), 1-Fan minimum pivots, honor tile discards, and Thirteen Orphans branching.
+            </p>
+            <ul class="portal-card-features">
+              <li>Complex sequential shapes & overlapping Ryanmen waits</li>
+              <li>Half-Flush (混一色) vs Ping-Hu pivot dilemmas</li>
+              <li>Avoiding the 0-Fan Chicken Hand Dragon Pair trap</li>
+              <li>10-Terminal Thirteen Orphans decision benchmarks</li>
+            </ul>
+          </div>
+          <div class="portal-card-btn">
+            <span>Play Puzzles</span>
+            <span>➔</span>
+          </div>
+        </div>
+
+        <!-- Card 3: Play vs 3 AI Bots -->
+        <div class="portal-card" data-navigate="tab-bots" style="border-color:rgba(7,108,192,0.4); background:radial-gradient(circle at top right, rgba(7,108,192,0.15) 0%, rgba(46,65,57,0.8) 100%);">
+          <div>
+            <div class="portal-card-header">
+              <div class="portal-card-icon" style="background:rgba(7,108,192,0.3); border-color:#60a5fa;">🤖</div>
+              <div class="portal-card-titles">
+                <h3>Play vs 3 AI Bots (人機對戰)</h3>
+                <div class="zh-title" style="color:#60a5fa;">四人麻將實戰模擬桌</div>
+              </div>
+            </div>
+            <p class="portal-card-desc">
+              Sit at a full 4-player tournament table against 3 AI bots. Experience continuous gameplay with live discard rivers (河), wall tile countdown, dynamic out calculation, and interactive calls for Chow, Pong, Kong, and Win!
+            </p>
+            <ul class="portal-card-features">
+              <li>136-tile live wall with continuous turn rotation</li>
+              <li>4 active discard rivers (河) with dynamic dead tile odds</li>
+              <li>Interactive call claims (胡 / 碰 / 槓 / 上 / 過)</li>
+              <li>Official TVB 2026 Appendix 1 point scoring & dealer pass</li>
+            </ul>
+          </div>
+          <div class="portal-card-btn" style="background:linear-gradient(135deg, #076cc0 0%, #054f8e 100%); color:#fff;">
+            <span>Play Match</span>
+            <span>➔</span>
+          </div>
+        </div>
+
+        <!-- Card 4: Custom Hand Builder -->
+        <div class="portal-card" data-navigate="tab-builder">
+          <div>
+            <div class="portal-card-header">
+              <div class="portal-card-icon">✏️</div>
+              <div class="portal-card-titles">
+                <h3>Custom Hand Builder & Analyzer</h3>
+                <div class="zh-title">自訂手牌構建與分析</div>
+              </div>
+            </div>
+            <p class="portal-card-desc">
+              Construct any custom 14-tile scenario using the visual 34-tile palette or load standard compact string notation (e.g. <code>123m456p789s11z55z</code>).
+            </p>
+            <ul class="portal-card-features">
+              <li>Visual click-to-add 34-tile bone palette</li>
+              <li>Full 136-deck copy limit validation</li>
+              <li>Compact notation parser (m/p/s/z)</li>
+              <li>Seamless 1-click transition to Discard Trainer</li>
+            </ul>
+          </div>
+          <div class="portal-card-btn">
+            <span>Build Hand</span>
+            <span>➔</span>
+          </div>
+        </div>
+
+        <!-- Card 5: Defense & Push/Fold Center -->
+        <div class="portal-card" data-navigate="tab-defense" style="border-color:rgba(239,68,68,0.3); background:radial-gradient(circle at top right, rgba(239,68,68,0.12) 0%, rgba(9,27,51,0.85) 100%);">
+          <div>
+            <div class="portal-card-header">
+              <div class="portal-card-icon" style="background:rgba(239,68,68,0.25); border-color:#fca5a5;">🛡️</div>
+              <div class="portal-card-titles">
+                <h3>Defense Center & Push/Fold</h3>
+                <div class="zh-title" style="color:#fca5a5;">防守特訓與攻守抉擇</div>
+              </div>
+            </div>
+            <p class="portal-card-desc">
+              Master the supreme defensive techniques under TVB Full Shooter rules: Genbutsu (跟打熟牌), Suji lines (筋牌), Kabe (壁牌), Withholding dangerous honors, and Push/Fold decision trees.
+            </p>
+            <ul class="portal-card-features">
+              <li>Interactive Betaori safe discard scenarios</li>
+              <li>High-stakes Push vs Fold turning point evaluation</li>
+              <li>Dynamic opponent threat radar & suspected fan value</li>
+              <li>Comprehensive 4-part defensive theory masterclass</li>
+            </ul>
+          </div>
+          <div class="portal-card-btn" style="background:linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%); color:#fff;">
+            <span>Train Defense</span>
+            <span>➔</span>
+          </div>
+        </div>
+
+        <!-- Card 6: Fan Counter & Quiz -->
+        <div class="portal-card" data-navigate="tab-fan">
+          <div>
+            <div class="portal-card-header">
+              <div class="portal-card-icon">🧮</div>
+              <div class="portal-card-titles">
+                <h3>Fan Counting & Dynamic Quiz</h3>
+                <div class="zh-title">算番大師與實戰測驗</div>
+              </div>
+            </div>
+            <p class="portal-card-desc">
+              Verify completed winning hands against official TVB 2026 Appendix 3 tournament scoring rules, self-draw bonuses, and limit hand valuations.
+            </p>
+            <ul class="portal-card-features">
+              <li>Dynamic random hand Fan quiz with difficulty filters</li>
+              <li>Strict 1-Fan minimum validation (rejects 0-Fan hands)</li>
+              <li>Interactive custom hand fan calculator</li>
+              <li>Itemized breakdown of all scoring elements & points</li>
+            </ul>
+          </div>
+          <div class="portal-card-btn">
+            <span>Take Fan Quiz</span>
+            <span>➔</span>
+          </div>
+        </div>
+
+        <!-- Card 7: TVB Rules -->
+        <div class="portal-card" data-navigate="tab-rules">
+          <div>
+            <div class="portal-card-header">
+              <div class="portal-card-icon">📜</div>
+              <div class="portal-card-titles">
+                <h3>Championship Rules & Strategy Guide</h3>
+                <div class="zh-title">大賽章程與計番指南</div>
+              </div>
+            </div>
+            <p class="portal-card-desc">
+              Comprehensive tournament rules reference for the 2026 TVB Mahjong Brain Fitness Championship US Station.
+            </p>
+            <ul class="portal-card-features">
+              <li>136 standard tiles, zero flower tiles</li>
+              <li>Strict ban on Seven Pairs (七對子 / 嚦咕嚦咕)</li>
+              <li>Full Shooter Penalty (全銃 / 全包制) mechanics</li>
+              <li>12-Tile Penalty (十二張包自摸) liability details</li>
+            </ul>
+          </div>
+          <div class="portal-card-btn">
+            <span>Read Rules</span>
+            <span>➔</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Tournament Highlights Cheat Sheet -->
+      <div class="highlights-section">
+        <div class="highlights-title">
+          <span>⚡</span>
+          <span>TVB 2026 Championship Core Rules Cheat Sheet (大賽核心規則速覽)</span>
+        </div>
+        <div class="highlights-grid">
+          <div class="highlight-card">
+            <h4>🚫 1-Fan Minimum (1番起胡)</h4>
+            <p>0-Fan Chicken Hand (雞胡) is strictly illegal and cannot win. Every winning hand must have a recognized scoring pattern.</p>
+          </div>
+          <div class="highlight-card">
+            <h4>🚫 Seven Pairs Banned (排除七對)</h4>
+            <p>Seven Pairs (七對子 / 嚦咕嚦咕) is invalid. Only 4 Melds + 1 Pair or Thirteen Orphans (10 Fan) are allowed.</p>
+          </div>
+          <div class="highlight-card">
+            <h4>🀄 136 Standard Tiles (零花牌)</h4>
+            <p>Played with 36 Characters, 36 Dots, 36 Bamboos, 16 Winds, and 12 Dragons. No flower or season tiles.</p>
+          </div>
+          <div class="highlight-card">
+            <h4>⚖️ Full Shooter Liability (全包制)</h4>
+            <p>Discarding into an opponent's win pays the full amount. Feeding 4 exposed melds of a limit hand invokes 12-Tile Penalty.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 1: DISCARD TRAINER -->
+    <section id="tab-trainer" class="view-section">
+      <!-- Controls Bar -->
+      <div class="controls-bar">
+        <div class="wind-selectors">
+          <div class="select-group">
+            <label for="select-prevailing-wind">Round Wind (圈風):</label>
+            <select id="select-prevailing-wind">
+              <option value="1z">東風圈 (East Round - 1z)</option>
+              <option value="2z">南風圈 (South Round - 2z)</option>
+              <option value="3z">西風圈 (West Round - 3z)</option>
+              <option value="4z">北風圈 (North Round - 4z)</option>
+            </select>
+          </div>
+
+          <div class="select-group">
+            <label for="select-seat-wind">Seat Wind (門風):</label>
+            <select id="select-seat-wind">
+              <option value="1z">東家 (East Seat - 1z)</option>
+              <option value="2z">南家 (South Seat - 2z)</option>
+              <option value="3z">西家 (West Seat - 3z)</option>
+              <option value="4z">北家 (North Seat - 4z)</option>
+            </select>
+          </div>
+
+          <div class="select-group" style="cursor:pointer;">
+            <input type="checkbox" id="toggle-continuous" checked />
+            <label for="toggle-continuous" style="cursor:pointer;">Continuous Practice (連打模式)</label>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button id="btn-deal-random" class="btn btn-primary">🎲 Deal Random Hand</button>
+        </div>
+      </div>
+
+      <!-- Hand Section -->
+      <div class="hand-section">
+        <div class="hand-header">
+          <div class="hand-title">🀄 Your 14-Tile Hand (Click any tile or press 1-9/0/-/=/q/w to discard):</div>
+          <div class="hand-tip">Optimal discard maximizes Ukeire Outs for lowest Shanten</div>
+        </div>
+
+        <div id="hand-tiles-rack" class="hand-tiles-rack">
+          <div style="color:var(--text-muted); padding:20px;">Dealing initial hand from 136-tile wall...</div>
+        </div>
+      </div>
+
+      <!-- Feedback & Math Comparison Box -->
+      <div id="feedback-box" class="feedback-box" style="display:none;"></div>
+
+      <!-- All Discards Matrix Table -->
+      <div class="table-section">
+        <div class="section-title">📊 Complete Discard Efficiency Matrix (全牌效分析表)</div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Discard Tile</th>
+                <th>Resulting Shanten</th>
+                <th>Total Outs (進張數)</th>
+                <th>Accepted Tiles (進張牌 & 剩餘張數)</th>
+                <th>Target 1-Fan+ Paths (起胡番種)</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="discards-table-body">
+              <tr><td colspan="7" style="text-align:center; padding:20px;">Evaluating hand efficiency...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: TACTICAL PUZZLES -->
+    <section id="tab-puzzles" class="view-section">
+      <!-- Mode Switcher & Stats Bar -->
+      <div class="controls-bar" style="margin-bottom:16px;">
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <button id="btn-mode-curated" class="btn btn-secondary btn-puzzle-mode active" style="font-weight:700;">
+            📚 Curated Lessons (經典名局)
+          </button>
+          <button id="btn-mode-drill" class="btn btn-secondary btn-puzzle-mode" style="font-weight:700;">
+            ⚡ Endless Themed Drill (無限同類特訓)
+          </button>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div class="stat-chip" id="chip-curated-stats">
+            <span>Lessons Solved:</span>
+            <span id="stat-puzzles-solved" class="val">0/10 ⭐</span>
+          </div>
+          <div class="stat-chip" id="chip-drill-stats" style="display:none;">
+            <span>Drill Streak:</span>
+            <span id="stat-drill-streak" class="val">0 🔥</span>
+          </div>
+          <div class="stat-chip" id="chip-drill-score" style="display:none;">
+            <span>Drill Score:</span>
+            <span id="stat-drill-score" class="val">0/0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Puzzle Interactive Arena -->
+      <div id="puzzle-arena" class="puzzle-arena-box" style="margin-bottom:28px;">
+        <div class="puzzle-arena-header">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span id="puzzle-badge-index" class="badge" style="background:var(--accent-gold); color:#111; font-weight:800;">Puzzle #1</span>
+            <span id="puzzle-badge-category" class="badge">多面聽牌效</span>
+            <span id="puzzle-badge-difficulty" class="badge" style="border-color:var(--accent-emerald); color:var(--accent-emerald);">⭐⭐⭐ Intermediate</span>
+            <span id="puzzle-badge-winds" class="badge" style="background:rgba(255,255,255,0.08); color:#fff;">東風圈 • 東家 (1z)</span>
+          </div>
+          <div class="action-buttons">
+            <button id="btn-prev-puzzle" class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem;">⏮️ Prev</button>
+            <button id="btn-next-puzzle" class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem;">Next ⏭️</button>
+          </div>
+        </div>
+
+        <h2 id="puzzle-title" style="font-size:1.35rem; color:#fff; margin-bottom:4px;">5-Sided Ryanmen Wait Extension (五面聽牌效)</h2>
+        <div id="puzzle-subtitle" style="font-size:0.88rem; color:var(--accent-gold); margin-bottom:12px; font-weight:600;">
+          Unlocking multi-sequence flexibility in a continuous run
+        </div>
+
+        <p id="puzzle-description" style="font-size:0.92rem; color:#d1d5db; line-height:1.6; margin-bottom:16px;">
+          You hold a 5-tile sequential block (23456m) combined with finished melds. Which discard maximizes your Tenpai winning waits to the highest possible outs?
+        </p>
+
+        <!-- Proverb Banner -->
+        <div id="puzzle-proverb-box" style="background:rgba(229,185,76,0.12); border-left:3px solid var(--accent-gold); padding:8px 14px; border-radius:4px; margin-bottom:16px; font-size:0.85rem; color:var(--accent-gold); font-weight:600;">
+          💡 牌訣：長條連續莫輕拆，五面聽張天下行
+        </div>
+
+        <!-- Interactive Puzzle Hand Rack -->
+        <div class="hand-section" style="margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+            <strong style="color:#fff; font-size:0.9rem;">🀄 Click a tile to make your tactical discard:</strong>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <label id="label-auto-advance" style="font-size:0.8rem; color:var(--accent-gold); cursor:pointer; display:none;">
+                <input type="checkbox" id="check-auto-advance" checked /> Auto-load next variation on win (答對自動出同類新題)
+              </label>
+              <button id="btn-toggle-hint" class="btn btn-secondary" style="padding:4px 10px; font-size:0.75rem;">
+                💡 Show Hint
+              </button>
+            </div>
+          </div>
+          <div id="puzzle-hint-box" style="display:none; background:rgba(0,0,0,0.3); border:1px dashed rgba(255,255,255,0.2); padding:10px 14px; border-radius:8px; font-size:0.85rem; color:#9ca3af; margin-bottom:12px;"></div>
+          <div id="puzzle-tiles-rack" class="hand-tiles-rack"></div>
+        </div>
+
+        <!-- Puzzle Feedback & Tactical Math Breakdown -->
+        <div id="puzzle-feedback" class="feedback-box" style="display:none; margin-bottom:16px;"></div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <button id="btn-load-in-trainer" class="btn btn-secondary">
+            🎯 Open Scenario in Full Discard Trainer
+          </button>
+          <button id="btn-next-puzzle-bottom" class="btn btn-primary">
+            Next Puzzle (下一難題) ➔
+          </button>
+        </div>
+      </div>
+
+      <!-- Category Filter Tabs & Drill Focus Selection -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+        <div class="section-title" id="puzzle-catalog-title" style="margin-bottom:0; font-size:1rem;">📚 All Puzzles Curriculum (完整難題題庫)</div>
+        <div id="puzzle-category-filters" style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="btn btn-secondary btn-filter active" data-category="all" style="padding:4px 10px; font-size:0.78rem;">All (全部)</button>
+          <button class="btn btn-secondary btn-filter" data-category="waits" style="padding:4px 10px; font-size:0.78rem;">多面聽牌效</button>
+          <button class="btn btn-secondary btn-filter" data-category="fan_pivot" style="padding:4px 10px; font-size:0.78rem;">1番起胡抉擇</button>
+          <button class="btn btn-secondary btn-filter" data-category="honors_defense" style="padding:4px 10px; font-size:0.78rem;">字牌與防守</button>
+          <button class="btn btn-secondary btn-filter" data-category="limit_hands" style="padding:4px 10px; font-size:0.78rem;">十番例牌</button>
+        </div>
+      </div>
+
+      <!-- Puzzles Catalog Grid -->
+      <div id="puzzle-catalog" class="puzzle-grid"></div>
+    </section>
+
+    <!-- TAB 3: 4-PLAYER TABLE GAME MATCH VS 3 AI BOTS (人機對戰) -->
+    <section id="tab-bots" class="view-section">
+      <div class="table-arena-wrapper">
+        <!-- Status Bar -->
+        <div class="table-status-bar">
+          <div class="table-status-left">
+            <span class="badge" id="bot-game-round-badge" style="background:var(--c-blue-diamond); color:#fff; font-weight:800; font-size:0.9rem; padding:6px 14px;">
+              🀄 東風圈 (East Round) • Hand #1/16
+            </span>
+            <span class="badge" id="bot-game-wall-badge" style="background:rgba(255,255,255,0.1); color:#fff; font-weight:700;">
+              🀄 Wall: <strong id="bot-game-wall-count" style="color:var(--accent-emerald);">83</strong> Tiles Left
+            </span>
+            <span class="badge" id="bot-game-dealer-badge" style="background:rgba(162,61,65,0.3); border:1px solid var(--c-ruby-ring); color:#fca5a5;">
+              庄 Dealer: Master Chan (東家)
+            </span>
+          </div>
+
+          <div style="display:flex; gap:10px; align-items:center;">
+            <button id="btn-toggle-bot-hud" class="btn btn-secondary" style="font-size:0.8rem; padding:6px 12px;">
+              👁️ Efficiency HUD: <span id="hud-toggle-text" style="color:#60a5fa; font-weight:700;">ON</span>
+            </button>
+            <button id="btn-restart-bot-game" class="btn btn-secondary" style="font-size:0.8rem; padding:6px 12px;">
+              🔄 New Match (重開新局)
+            </button>
+          </div>
+        </div>
+
+        <!-- 4-Player Felt Mahjong Arena -->
+        <div class="mahjong-table-felt">
+          <!-- TOP STATION: North Bot (Steady Cheung 張沉著 / 對家) -->
+          <div class="station-top">
+            <div class="player-card-badge" id="badge-p3">
+              <div class="seat-wind-pill" id="seat-p3">北</div>
+              <strong>Steady Cheung (張沉著)</strong>
+              <span class="badge" style="background:rgba(255,255,255,0.1); font-family:var(--font-mono);" id="score-p3">500 pts</span>
+            </div>
+            <div class="exposed-melds-container" id="melds-p3"></div>
+            <div class="bot-hand-back-rack" id="rack-p3">
+              <div class="bot-tile-back"></div><div class="bot-tile-back"></div><div class="bot-tile-back"></div>
+              <div class="bot-tile-back"></div><div class="bot-tile-back"></div><div class="bot-tile-back"></div>
+              <div class="bot-tile-back"></div><div class="bot-tile-back"></div><div class="bot-tile-back"></div>
+              <div class="bot-tile-back"></div><div class="bot-tile-back"></div><div class="bot-tile-back"></div>
+              <div class="bot-tile-back"></div>
+            </div>
+          </div>
+
+          <!-- LEFT STATION: East Bot (Master Chan 陳大師 / 上家) -->
+          <div class="station-left">
+            <div class="player-card-badge" id="badge-p0">
+              <div class="seat-wind-pill dealer" id="seat-p0">東</div>
+              <strong>Master Chan (陳大師)</strong>
+              <span class="badge" style="background:rgba(255,255,255,0.1); font-family:var(--font-mono);" id="score-p0">500 pts</span>
+            </div>
+            <div class="exposed-melds-container" id="melds-p0"></div>
+            <div class="bot-hand-back-rack" id="rack-p0">
+              <div class="bot-tile-back"></div><div class="bot-tile-back"></div><div class="bot-tile-back"></div>
+              <div class="bot-tile-back"></div><div class="bot-tile-back"></div><div class="bot-tile-back"></div>
+              <div class="bot-tile-back"></div><div class="bot-tile-back"></div><div class="bot-tile-back"></div>
+              <div class="bot-tile-back"></div><div class="bot-tile-back"></div><div class="bot-tile-back"></div>
+              <div class="bot-tile-back"></div>
+            </div>
+          </div>
+
+          <!-- CENTER DISCARD RIVERS (河) - 3x3 Grid Layout without tile overlap -->
+          <div class="center-felt-rivers">
+            <!-- North River (Top) -->
+            <div class="river-box river-top" id="river-p3" title="Steady Cheung (North) River"></div>
+
+            <!-- East River (Left / 上家) -->
+            <div class="river-box river-left" id="river-p0" title="Master Chan (East) River"></div>
+
+            <!-- Center Table Status Tile Box (Non-overlapping) -->
+            <div class="table-center-info">
+              <div class="table-center-label">ROUND 圈風</div>
+              <div id="table-center-wind" class="table-center-wind-val">東風</div>
+              <div id="table-turn-indicator" class="table-turn-pill">Turn: 東</div>
+            </div>
+
+            <!-- West River (Right / 下家) -->
+            <div class="river-box river-right" id="river-p2" title="Tactical Lee (West) River"></div>
+
+            <!-- South / User River (Bottom) -->
+            <div class="river-box river-bottom" id="river-p1" title="Your (South) River"></div>
+          </div>
+
+          <!-- RIGHT STATION: West Bot (Tactical Lee 李戰術 / 下家) -->
+          <div class="station-right">
+            <div class="player-card-badge" id="badge-p2">
+              <div class="seat-wind-pill" id="seat-p2">西</div>
+              <strong>Tactical Lee (李戰術)</strong>
+              <span class="badge" style="background:rgba(255,255,255,0.1); font-family:var(--font-mono);" id="score-p2">500 pts</span>
+            </div>
+            <div class="exposed-melds-container" id="melds-p2"></div>
+            <div class="bot-hand-back-rack" id="rack-p2">
+              <div class="bot-tile-back"></div><div class="bot-tile-back"></div><div class="bot-tile-back"></div>
+              <div class="bot-tile-back"></div><div class="bot-tile-back"></div><div class="bot-tile-back"></div>
+              <div class="bot-tile-back"></div><div class="bot-tile-back"></div><div class="bot-tile-back"></div>
+              <div class="bot-tile-back"></div><div class="bot-tile-back"></div><div class="bot-tile-back"></div>
+              <div class="bot-tile-back"></div>
+            </div>
+          </div>
+
+          <!-- BOTTOM STATION: User Player (South / You) -->
+          <div class="station-bottom">
+            <div class="player-card-badge" id="badge-p1">
+              <div class="seat-wind-pill" id="seat-p1">南</div>
+              <strong style="color:#60a5fa;">👤 You (玩家)</strong>
+              <span class="badge" style="background:rgba(255,255,255,0.1); font-family:var(--font-mono);" id="score-p1">500 pts</span>
+            </div>
+            <div class="exposed-melds-container" id="melds-p1"></div>
+            
+            <!-- User Tile Rack -->
+            <div class="user-hand-interactive-rack" id="bot-user-tiles-rack">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Floating Interactive Claim Action Bar -->
+          <div id="bot-claim-actions-bar" class="claim-action-bar" style="display:none;">
+            <button id="btn-claim-win" class="btn-claim btn-claim-win" style="display:none;">
+              🀄 胡 (Win / Ron) <span id="claim-win-fan-badge" class="badge" style="background:#fff; color:#b91c1c; font-size:0.75rem;">1番</span>
+            </button>
+            <button id="btn-claim-pong" class="btn-claim btn-claim-pong" style="display:none;">
+              碰 (Pong)
+            </button>
+            <button id="btn-claim-kong" class="btn-claim btn-claim-kong" style="display:none;">
+              槓 (Kong)
+            </button>
+            <button id="btn-claim-chow" class="btn-claim btn-claim-chow" style="display:none;">
+              上 (Chow)
+            </button>
+            <button id="btn-claim-pass" class="btn-claim btn-claim-pass">
+              ✕ 過 (Pass)
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Efficiency & River Odds Assistant HUD (Toggleable) -->
+        <div id="bot-efficiency-hud-panel" class="efficiency-hud-panel" style="display:block;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-weight:700; color:var(--c-blue-diamond); font-size:0.95rem; display:flex; align-items:center; gap:6px;">
+              📊 Live River Odds & Efficiency HUD (即時牌效與牌河損耗分析)
+            </div>
+            <span id="hud-shanten-badge" class="shanten-badge shanten-1">1-Shanten</span>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:12px; font-size:0.88rem;">
+            <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:8px;">
+              <div style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; font-weight:700; margin-bottom:4px;">Recommended Discard (推薦打牌):</div>
+              <div id="hud-optimal-discard-text" style="color:#fff; font-weight:700;">-</div>
+            </div>
+            <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:8px;">
+              <div style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; font-weight:700; margin-bottom:4px;">Dynamic Live Outs (扣除四家牌河剩餘進張):</div>
+              <div id="hud-live-outs-chips" class="outs-chips"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Match Activity Ticker -->
+        <div class="match-log-box" id="bot-match-log-ticker">
+          <div>🀄 Match initialized. Table seating: Master Chan (East), You (South), Tactical Lee (West), Steady Cheung (North).</div>
+        </div>
+      </div>
+
+      <!-- Victory / Round End Modal -->
+      <div id="bot-round-end-modal" class="table-game-modal" style="display:none;">
+        <div class="table-modal-card">
+          <div style="text-align:center; margin-bottom:16px;">
+            <div id="modal-winner-icon" style="font-size:2.8rem; margin-bottom:6px;">🏆</div>
+            <h2 id="modal-winner-title" style="color:var(--c-blue-diamond); margin-bottom:4px;">Master Chan 自摸胡牌！</h2>
+            <div id="modal-hand-name" style="font-size:1.1rem; color:var(--accent-emerald); font-weight:700;">平胡 + 自摸 (2 番 / Fan)</div>
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:6px;">Winning Hand Tiles (胡牌牌型):</div>
+            <div id="modal-winning-hand-rack" style="display:flex; flex-wrap:wrap; gap:3px; justify-content:center; background:rgba(0,0,0,0.3); padding:8px; border-radius:8px;"></div>
+          </div>
+
+          <div id="modal-fan-breakdown-box" style="margin-bottom:16px; background:rgba(0,0,0,0.25); padding:10px; border-radius:8px; font-size:0.85rem;"></div>
+
+          <div style="margin-bottom:20px;">
+            <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:6px;">Appendix 1 Point Adjustments (附錄一得失分結算):</div>
+            <div id="modal-points-delta-table" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; text-align:center; font-weight:700; font-size:0.9rem;"></div>
+          </div>
+
+          <div style="display:flex; justify-content:center;">
+            <button id="btn-modal-next-hand" class="btn btn-primary" style="padding:10px 28px; font-size:1rem;">
+              Next Hand ➡️ (進入下一盤)
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: CUSTOM HAND BUILDER & TACTICAL ANALYZER WORKBENCH -->
+    <section id="tab-builder" class="view-section">
+      <div class="controls-bar" style="margin-bottom:16px;">
+        <div>
+          <div class="section-title" style="margin-bottom:4px;">✏️ Custom Hand Builder & Tactical Analyzer (手牌構建與戰術拆解實驗室)</div>
+          <p style="color:var(--text-muted); font-size:0.85rem;">
+            Construct any 14-tile hand using the visual palette or compact notation. Analyze structural blocks, 1-Fan minimum legality, and ranked tactical lines to reach Tenpai fastest!
+          </p>
+        </div>
+        
+        <!-- Builder Wind Selectors -->
+        <div class="wind-selectors" style="align-items:center;">
+          <div class="select-group">
+            <label for="builder-select-round">Round (圈風):</label>
+            <select id="builder-select-round">
+              <option value="1z">東風圈 (1z)</option>
+              <option value="2z">南風圈 (2z)</option>
+              <option value="3z">西風圈 (3z)</option>
+              <option value="4z">北風圈 (4z)</option>
+            </select>
+          </div>
+          <div class="select-group">
+            <label for="builder-select-seat">Seat (門風):</label>
+            <select id="builder-select-seat">
+              <option value="1z">東家 (East - 1z)</option>
+              <option value="2z">南家 (South - 2z)</option>
+              <option value="3z">西家 (West - 3z)</option>
+              <option value="4z">北家 (North - 4z)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Preset Hand Loaders -->
+      <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px 14px; margin-bottom:16px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <span style="font-size:0.82rem; color:var(--accent-gold); font-weight:700;">🌟 Quick Presets:</span>
+        <button class="btn btn-secondary btn-preset" data-preset="23456m456p789s11z5z" style="padding:4px 8px; font-size:0.75rem;">5-Sided Run (五面聽)</button>
+        <button class="btn btn-secondary btn-preset" data-preset="2345m678p456s78s9p2z" style="padding:4px 8px; font-size:0.75rem;">Nobeta 4-Run (四連伸張)</button>
+        <button class="btn btn-secondary btn-preset" data-preset="123m456p789s23s55z4z" style="padding:4px 8px; font-size:0.75rem;">0-Fan Chicken Trap (雞胡陷阱)</button>
+        <button class="btn btn-secondary btn-preset" data-preset="123s456s789s11z22z5m" style="padding:4px 8px; font-size:0.75rem;">Half-Flush Pivot (混一色)</button>
+        <button class="btn btn-secondary btn-preset" data-preset="119m19p19s1234z2m3m5s" style="padding:4px 8px; font-size:0.75rem;">Thirteen Orphans (十三幺)</button>
+        <button class="btn btn-secondary btn-preset" data-preset="123m456m789m234p55p" style="padding:4px 8px; font-size:0.75rem;">Tenpai Ready (聽牌手牌)</button>
+      </div>
+
+      <!-- Compact String Input -->
+      <div style="margin-bottom:16px; background:rgba(0,0,0,0.35); padding:14px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
+        <label style="display:block; font-weight:600; font-size:0.88rem; margin-bottom:6px;">Standard Compact String Notation:</label>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <input type="text" id="input-custom-hand" placeholder="e.g. 123m456p789s11z55z" style="flex:1; min-width:240px; font-family:var(--font-mono); font-size:0.95rem;" value="23456m456p789s11z5z" />
+          <button id="btn-load-custom" class="btn btn-secondary">Load Into Builder</button>
+        </div>
+      </div>
+
+      <!-- Builder Tile Rack -->
+      <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div>
+          <strong>Visual Builder Hand:</strong> 
+          <span id="builder-count" style="color:var(--accent-gold); font-weight:700; margin-left:6px;">0/14</span>
+          <span style="font-size:0.78rem; color:var(--text-muted); margin-left:8px;">(Click any tile below to remove)</span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button id="btn-clear-builder" class="btn btn-secondary">🗑️ Clear Hand</button>
+          <button id="btn-apply-builder" class="btn btn-primary" style="font-weight:700;">🎯 Analyze Hand (深度戰術拆解)</button>
+        </div>
+      </div>
+
+      <div id="builder-hand-tiles" class="hand-tiles-rack" style="min-height:110px; margin-bottom:16px;">
+        <div style="color:var(--text-muted); padding:10px;">Click tiles from the palette below or load a preset above to build your 14-tile hand.</div>
+      </div>
+
+      <!-- Tile Palette -->
+      <div style="margin-bottom:20px;">
+        <div class="section-title" style="font-size:0.9rem; margin-bottom:8px;">Tile Palette (Click to Add):</div>
+        <div id="palette-tiles" class="palette-grid"></div>
+      </div>
+
+      <!-- In-Tab Deep Tactical Breakdown Report -->
+      <div id="builder-analysis-report" style="display:none; margin-top:24px;">
+        <div class="section-title" style="font-size:1.2rem; color:var(--accent-gold); margin-bottom:12px;">
+          🔬 Hand Structural Breakdown & Tactical Diagnosis (手牌深度戰術拆解報告)
+        </div>
+
+        <!-- Hand Diagnosis Banner -->
+        <div id="builder-diagnosis-card" class="feedback-box" style="display:block; margin-bottom:20px; border-color:var(--accent-gold);"></div>
+
+        <!-- Structural Blocks Decomposition -->
+        <div style="background:rgba(0,0,0,0.35); border-radius:10px; padding:16px; border:1px solid rgba(255,255,255,0.1); margin-bottom:20px;">
+          <h3 style="font-size:1rem; color:var(--accent-gold); margin-bottom:8px;">🧱 Identified Blocks & Shape Structures (面子與搭子形態識別)</h3>
+          <div id="builder-blocks-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+
+        <!-- Ranked Tactical Lines of Play -->
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:1.1rem; color:#fff; margin-bottom:12px;">🎯 Ranked Tactical Lines of Play (最優戰術進攻路線)</h3>
+          <div id="builder-tactical-lines-container" style="display:flex; flex-direction:column; gap:14px;"></div>
+        </div>
+
+        <!-- Full 14 Discard Efficiency Table -->
+        <div class="table-container" style="margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:rgba(0,0,0,0.5); border-bottom:1px solid rgba(255,255,255,0.1);">
+            <strong style="color:var(--accent-gold);">📊 Full 14-Discard Efficiency Matrix (完整14打全牌效表)</strong>
+            <button id="btn-builder-send-trainer" class="btn btn-secondary" style="font-size:0.8rem; padding:4px 10px;">
+              🚀 Send Hand to Discard Trainer ➔
+            </button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Discard Tile</th>
+                <th>Resulting Shanten</th>
+                <th>Total Outs (進張數)</th>
+                <th>Accepted Tiles Breakdown</th>
+                <th>Target Winning Paths</th>
+              </tr>
+            </thead>
+            <tbody id="builder-discards-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: DEFENSE MASTERCLASS & PUSH/FOLD CENTER -->
+    <section id="tab-defense" class="view-section">
+      <!-- Header & Mode Switcher -->
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+        <div>
+          <div class="section-title" style="margin-bottom:4px;">🛡️ Hong Kong Mahjong Defense & Push/Fold Center (防守與攻守判斷特訓)</div>
+          <p style="color:var(--text-muted); font-size:0.85rem;">
+            Master the supreme art of defense in Hong Kong Mahjong (全銃制防大牌): Genbutsu (跟打熟牌), Suji Theory (筋牌法則 1-4-7/2-5-8/3-6-9), Kabe (壁牌/斷門), Withholding dangerous tiles (死扣生字與同門牌), and Push/Fold (攻守轉折點) decision-making.
+          </p>
+        </div>
+        <div style="display:flex; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:3px; gap:4px;">
+          <button id="btn-defense-mode-drills" class="btn btn-primary" style="padding:6px 14px; font-size:0.85rem; font-weight:700;">
+            🎯 Defense Scenario Drills (防守實戰測驗)
+          </button>
+          <button id="btn-defense-mode-theory" class="btn btn-secondary" style="padding:6px 14px; font-size:0.85rem;">
+            📚 Defensive Theory Masterclass (防守理論大師庫)
+          </button>
+        </div>
+      </div>
+
+      <!-- PANE 1: INTERACTIVE DEFENSE SCENARIO DRILLS -->
+      <div id="defense-pane-drills" style="display:block;">
+        <!-- Top Toolbar & Scoreboard -->
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:12px 16px; margin-bottom:16px;">
+          <!-- Scenario Filter Buttons -->
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <span style="font-size:0.8rem; color:var(--accent-gold); font-weight:700; margin-right:4px;">Scenario Type (情境):</span>
+            <button class="btn btn-secondary btn-defense-scenario active" data-type="betaori" style="padding:4px 12px; font-size:0.75rem;">
+              🛡️ Full Betaori Safe Discard (完全棄和找熟牌)
+            </button>
+            <button class="btn btn-secondary btn-defense-scenario" data-type="push_fold" style="padding:4px 12px; font-size:0.75rem;">
+              ⚖️ Push vs Fold Turning Point (攻守轉折點抉擇)
+            </button>
+          </div>
+
+          <!-- Scoreboard -->
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span class="badge" style="background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; font-size:0.85rem; font-weight:700;">
+              🔥 Streak: <strong id="defense-drill-streak" style="color:#fff;">0</strong>
+            </span>
+            <span class="badge" style="background:rgba(234,179,8,0.2); border:1px solid rgba(234,179,8,0.4); color:#fef08a; font-size:0.85rem;">
+              🏆 Best: <strong id="defense-drill-best" style="color:#fff;">0</strong>
+            </span>
+            <span class="badge" style="background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.4); color:#93c5fd; font-size:0.85rem;">
+              🎯 Accuracy: <strong id="defense-drill-acc" style="color:#fff;">0%</strong> (<span id="defense-drill-score-fraction">0/0</span>)
+            </span>
+          </div>
+        </div>
+
+        <!-- Defense Arena Card -->
+        <div style="background:linear-gradient(135deg, rgba(162,61,65,0.15) 0%, rgba(46,65,57,0.35) 100%); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 4px 16px rgba(0,0,0,0.3);">
+          <!-- Header Bar with Next button -->
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span id="defense-threat-badge" class="badge" style="background:#dc2626; color:#fff; font-weight:700; font-size:0.85rem; padding:4px 10px;">
+                ⚠️ Threat Level: CRITICAL (極高威脅)
+              </span>
+              <span id="defense-suspected-fan-badge" class="badge" style="background:var(--c-ruby-ring); color:#fff; font-size:0.85rem;">
+                大牌預警: 4+ 番
+              </span>
+              <span id="defense-target-player-badge" class="badge" style="background:var(--c-blue-diamond); color:#fff; font-size:0.85rem;">
+                Target: Master Chan (東家)
+              </span>
+            </div>
+
+            <button id="btn-defense-next-puzzle" class="btn btn-secondary" style="font-size:0.8rem; padding:4px 12px;">
+              🔄 換一題 (Next Scenario)
+            </button>
+          </div>
+
+          <!-- Opponent Exposed Melds & River Rack -->
+          <div style="background:rgba(0,0,0,0.35); border-radius:8px; padding:12px 16px; margin-bottom:16px;">
+            <div style="font-size:0.82rem; color:var(--accent-gold); font-weight:700; text-transform:uppercase; margin-bottom:6px;">
+              Opponent's Exposed Melds & Table Discards (對手副露與牌河):
+            </div>
+            <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="font-size:0.8rem; color:#9ca3af;">副露 (Melds):</span>
+                <div id="defense-opp-melds-rack" style="display:flex; gap:8px;"></div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <span style="font-size:0.8rem; color:#9ca3af;">牌河 (River):</span>
+              <div id="defense-opp-river-rack" style="display:flex; gap:4px; flex-wrap:wrap;"></div>
+            </div>
+            <div id="defense-threat-narrative" style="font-size:0.85rem; color:#e5e7eb; margin-top:8px; border-top:1px dashed rgba(255,255,255,0.1); padding-top:6px;"></div>
+          </div>
+
+          <!-- User Hand Rack -->
+          <div style="margin-bottom:18px;">
+            <div id="defense-hand-prompt" style="font-size:0.95rem; font-weight:700; color:#fff; margin-bottom:8px;">
+              Your 14-Tile Hand — Click on your defensive discard (點選你手中最安全的防守捨牌):
+            </div>
+            <div id="defense-user-hand-rack" style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; background:rgba(0,0,0,0.4); padding:12px 16px; border-radius:10px; min-height:80px; justify-content:center;">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Push/Fold Action Buttons (Visible for Push/Fold scenario) -->
+          <div id="defense-push-fold-actions" style="display:none; justify-content:center; gap:12px; margin-bottom:16px;">
+            <button class="btn btn-secondary btn-pf-choice" data-choice="PUSH" style="padding:10px 20px; font-weight:700; border-color:#34d399; color:#34d399;">
+              ⚔️ PUSH (進攻 / 押牌)
+            </button>
+            <button class="btn btn-secondary btn-pf-choice" data-choice="MAWASHI" style="padding:10px 20px; font-weight:700; border-color:#38bdf8; color:#38bdf8;">
+              ⚖️ MAWASHI (兜牌 / 安全牌效兼顧)
+            </button>
+            <button class="btn btn-secondary btn-pf-choice" data-choice="FOLD" style="padding:10px 20px; font-weight:700; border-color:#ef4444; color:#fca5a5;">
+              🛡️ FOLD (完全棄和 / Betaori)
+            </button>
+          </div>
+
+          <!-- Submit Button -->
+          <div style="display:flex; justify-content:center;">
+            <button id="btn-defense-submit" class="btn btn-primary" style="padding:10px 32px; font-size:1rem; font-weight:700;">
+              🎯 驗證防守決策 (Confirm Defensive Decision)
+            </button>
+          </div>
+        </div>
+
+        <!-- Defense Feedback & Tactical Analysis Card -->
+        <div id="defense-feedback-card" style="display:none; background:rgba(0,0,0,0.4); border-radius:12px; padding:20px; border:2px solid var(--c-blue-diamond); margin-bottom:20px;">
+          <div id="defense-result-header" style="display:flex; align-items:center; gap:10px; margin-bottom:14px; font-size:1.3rem; font-weight:800;"></div>
+          
+          <div id="defense-explanation-box" style="background:rgba(0,0,0,0.3); border-radius:8px; padding:12px 16px; margin-bottom:14px; font-size:0.95rem; color:#fff; line-height:1.6;"></div>
+
+          <!-- Full Tile Safety Heatmap Ranking Table -->
+          <div id="defense-heatmap-container" style="margin-bottom:16px;">
+            <div style="font-size:0.85rem; color:var(--accent-gold); font-weight:700; text-transform:uppercase; margin-bottom:8px;">
+              📊 Hand Tile Danger Ranking Heatmap (手中牌張危險度天梯表):
+            </div>
+            <div id="defense-heatmap-table" style="display:flex; flex-direction:column; gap:6px;"></div>
+          </div>
+
+          <div style="display:flex; justify-content:center;">
+            <button id="btn-defense-next-after-result" class="btn btn-primary" style="padding:10px 28px; font-size:1rem;">
+              Next Scenario ➡️ (進入下一情境)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE 2: DEFENSIVE THEORY MASTERCLASS -->
+      <div id="defense-pane-theory" style="display:none;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:16px; margin-bottom:20px;">
+          <!-- Card 1: Genbutsu & Dead Tiles -->
+          <div class="rules-card">
+            <h3 style="color:var(--accent-emerald); display:flex; align-items:center; gap:8px;">
+              <span>🀄</span> 1. 跟打熟牌與現物 (Genbutsu)
+            </h3>
+            <p style="font-size:0.88rem; color:#cbd5e1; line-height:1.6; margin-top:8px;">
+              <strong>現物（跟打熟牌）：</strong>對手牌河中已經打過的牌，向其出銃率為 0%。<br/>
+              <strong>三見/四見字牌：</strong>牌桌上已見 3 張或 4 張的字牌（東南西北中發白），絕不可能成刻或成對，防守安全性高達 95%~100%！<br/>
+              <strong>生張字牌（極度危險）：</strong>若對手已亮混一色或兩副露，絕不可輕出 0 見的生張中發白或門風！
+            </p>
+          </div>
+
+          <!-- Card 2: Suji Theory -->
+          <div class="rules-card">
+            <h3 style="color:var(--c-blue-diamond); display:flex; align-items:center; gap:8px;">
+              <span>📏</span> 2. 筋牌防守法則 (Suji 1-4-7 / 2-5-8 / 3-6-9)
+            </h3>
+            <p style="font-size:0.88rem; color:#cbd5e1; line-height:1.6; margin-top:8px;">
+              <strong>表筋（外筋）：</strong>若對手打過 4，則 1 與 7 不會被 23 或 56 的兩面順子聽牌！<br/>
+              • 打過 4 萬 $\to$ 1 萬、7 萬相對安全。<br/>
+              • 打過 5 筒 $\to$ 2 筒、8 筒相對安全。<br/>
+              • 打過 6 索 $\to$ 3 索、9 索相對安全。<br/>
+              <strong>雙筋：</strong>若 1 與 7 皆已打出，中張 4 為雙筋，安全性大幅提升。
+            </p>
+          </div>
+
+          <!-- Card 3: Kabe & Wall Theory -->
+          <div class="rules-card">
+            <h3 style="color:var(--accent-gold); display:flex; align-items:center; gap:8px;">
+              <span>🧱</span> 3. 壁牌與斷門理論 (Kabe / No-Chance)
+            </h3>
+            <p style="font-size:0.88rem; color:#cbd5e1; line-height:1.6; margin-top:8px;">
+              <strong>No-Chance（斷牌）：</strong>若某張牌在牌桌上已見 4 張（如四張 7 筒全現），則對手不可能持有 78 聽 69 或 67 聽 58！<br/>
+              • 斷 7 筒 $\implies$ 8 筒、9 筒為無筋安全牌。<br/>
+              • 斷 3 萬 $\implies$ 1 萬、2 萬極度安全。<br/>
+              <strong>One-Chance：</strong>已見 3 張，危險度減半。
+            </p>
+          </div>
+
+          <!-- Card 4: TVB Push/Fold Decision Tree -->
+          <div class="rules-card">
+            <h3 style="color:var(--c-ruby-ring); display:flex; align-items:center; gap:8px;">
+              <span>⚖️</span> 4. TVB 全銃制攻守轉折點 (Push / Fold)
+            </h3>
+            <p style="font-size:0.88rem; color:#cbd5e1; line-height:1.6; margin-top:8px;">
+              <strong>全銃制原則：</strong>TVB 大賽放銃者需全額承擔失分（$-10\times\text{番數}$）。<br/>
+              • <strong>進攻（Push）：</strong>手牌已聽牌（0向聽）且有 3+ 番價值。<br/>
+              • <strong>兜牌（Mawashi）：</strong>一向聽大牌，只出安全牌或筋牌保留進張。<br/>
+              • <strong>完全棄和（Betaori）：</strong>二向聽以上，對手已開兩副露或大牌，100% 跟打熟牌！
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: FAN COUNTER & DYNAMIC FAN QUIZ TRAINER -->
+    <section id="tab-fan" class="view-section">
+      <!-- Header & Mode Switcher -->
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+        <div>
+          <div class="section-title" style="margin-bottom:4px;">🧮 Fan Counting Master & Dynamic Quiz (算番大師與動態測驗)</div>
+          <p style="color:var(--text-muted); font-size:0.85rem;">
+            Master the art of counting Hong Kong Mahjong Fan under TVB 2026 Tournament Rules. Classify patterns, calculate total Fan, spot 0-Fan traps, and verify tournament point payouts!
+          </p>
+        </div>
+        <!-- Mode Switcher Buttons -->
+        <div style="display:flex; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:3px; gap:4px;">
+          <button id="btn-fan-mode-quiz" class="btn btn-primary" style="padding:6px 14px; font-size:0.85rem; font-weight:700;">
+            🎯 Dynamic Fan Quiz (算番測驗)
+          </button>
+          <button id="btn-fan-mode-custom" class="btn btn-secondary" style="padding:6px 14px; font-size:0.85rem;">
+            🧮 Custom Calculator (自由算番器)
+          </button>
+        </div>
+      </div>
+
+      <!-- PANE 1: DYNAMIC FAN QUIZ DRILL -->
+      <div id="fan-pane-quiz" style="display:block;">
+        <!-- Quiz Controls & Scoreboard Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:12px 16px; margin-bottom:16px;">
+          <!-- Difficulty Filter Pills -->
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <span style="font-size:0.8rem; color:var(--accent-gold); font-weight:700; margin-right:4px;">Difficulty (難度):</span>
+            <button class="btn btn-secondary btn-fan-diff active" data-diff="all" style="padding:4px 10px; font-size:0.75rem;">All Hands (全部)</button>
+            <button class="btn btn-secondary btn-fan-diff" data-diff="beginner" style="padding:4px 10px; font-size:0.75rem;">🟢 Beginner (1-3番)</button>
+            <button class="btn btn-secondary btn-fan-diff" data-diff="intermediate" style="padding:4px 10px; font-size:0.75rem;">🔵 Intermediate (4-6番)</button>
+            <button class="btn btn-secondary btn-fan-diff" data-diff="limit" style="padding:4px 10px; font-size:0.75rem;">🟣 Limit (7-10番+)</button>
+            <button class="btn btn-secondary btn-fan-diff" data-diff="traps" style="padding:4px 10px; font-size:0.75rem;">⚠️ 0-Fan Traps (雞胡陷阱)</button>
+          </div>
+
+          <!-- Score & Streak Pills -->
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span class="badge" style="background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; font-size:0.85rem; font-weight:700;">
+              🔥 Streak: <strong id="fan-quiz-streak" style="color:#fff;">0</strong>
+            </span>
+            <span class="badge" style="background:rgba(234,179,8,0.2); border:1px solid rgba(234,179,8,0.4); color:#fef08a; font-size:0.85rem;">
+              🏆 Best: <strong id="fan-quiz-best" style="color:#fff;">0</strong>
+            </span>
+            <span class="badge" style="background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.4); color:#93c5fd; font-size:0.85rem;">
+              🎯 Accuracy: <strong id="fan-quiz-acc" style="color:#fff;">0%</strong> (<span id="fan-quiz-score-fraction">0/0</span>)
+            </span>
+          </div>
+        </div>
+
+        <!-- Quiz Question Card -->
+        <div style="background:linear-gradient(135deg, rgba(7,108,192,0.15) 0%, rgba(46,65,57,0.3) 100%); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 4px 16px rgba(0,0,0,0.3);">
+          <!-- Context Indicators Header -->
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span id="quiz-win-type-badge" class="badge" style="background:var(--c-ruby-ring); color:#fff; font-weight:700; font-size:0.85rem; padding:4px 10px;">
+                🀄 Self-Draw (Zi Mo)
+              </span>
+              <span id="quiz-round-wind-badge" class="badge" style="background:var(--c-blue-diamond); color:#fff; font-size:0.85rem;">
+                Round Wind: East
+              </span>
+              <span id="quiz-seat-wind-badge" class="badge" style="background:rgba(255,255,255,0.15); color:#fff; font-size:0.85rem;">
+                Seat Wind: South
+              </span>
+              <span id="quiz-diff-tag" class="badge" style="background:rgba(0,0,0,0.3); color:var(--accent-gold); font-size:0.75rem;">
+                Beginner (1-3 Fan)
+              </span>
+            </div>
+
+            <button id="btn-quiz-next-puzzle" class="btn btn-secondary" data-en="🔄 Next Hand" data-zh="🔄 換一題" style="font-size:0.8rem; padding:4px 12px;">
+              🔄 Next Hand
+            </button>
+          </div>
+
+          <!-- Hand Tiles Display Rack -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:8px;">Winning Hand Tiles (胡牌牌型):</div>
+            <div id="quiz-hand-tiles-rack" style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; background:rgba(0,0,0,0.4); padding:12px 16px; border-radius:10px; min-height:80px; justify-content:center;">
+              <!-- Tiles populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Question Step 1: Select Total Fan -->
+          <div style="margin-bottom:18px;">
+            <div style="font-size:0.95rem; font-weight:700; color:#fff; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+              <span style="background:var(--c-blue-diamond); color:#fff; border-radius:50%; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; font-size:0.8rem;">1</span>
+              How many Fan is this hand? (此手牌總共有多少番？)
+            </div>
+            <div id="quiz-fan-buttons-grid" style="display:flex; flex-wrap:wrap; gap:8px;">
+              <button class="btn btn-fan-num" data-fan="0" style="background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,255,255,0.25); color:#ffffff; padding:8px 14px; font-weight:700; border-radius:8px;">0番 (雞胡)</button>
+              <button class="btn btn-fan-num" data-fan="1" style="background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,255,255,0.25); color:#ffffff; padding:8px 14px; font-weight:700; border-radius:8px;">1番</button>
+              <button class="btn btn-fan-num" data-fan="2" style="background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,255,255,0.25); color:#ffffff; padding:8px 14px; font-weight:700; border-radius:8px;">2番</button>
+              <button class="btn btn-fan-num" data-fan="3" style="background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,255,255,0.25); color:#ffffff; padding:8px 14px; font-weight:700; border-radius:8px;">3番</button>
+              <button class="btn btn-fan-num" data-fan="4" style="background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,255,255,0.25); color:#ffffff; padding:8px 14px; font-weight:700; border-radius:8px;">4番</button>
+              <button class="btn btn-fan-num" data-fan="5" style="background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,255,255,0.25); color:#ffffff; padding:8px 14px; font-weight:700; border-radius:8px;">5番</button>
+              <button class="btn btn-fan-num" data-fan="6" style="background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,255,255,0.25); color:#ffffff; padding:8px 14px; font-weight:700; border-radius:8px;">6番</button>
+              <button class="btn btn-fan-num" data-fan="7" style="background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,255,255,0.25); color:#ffffff; padding:8px 14px; font-weight:700; border-radius:8px;">7番</button>
+              <button class="btn btn-fan-num" data-fan="8" style="background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,255,255,0.25); color:#ffffff; padding:8px 14px; font-weight:700; border-radius:8px;">8番</button>
+              <button class="btn btn-fan-num" data-fan="9" style="background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,255,255,0.25); color:#ffffff; padding:8px 14px; font-weight:700; border-radius:8px;">9番</button>
+              <button class="btn btn-fan-num" data-fan="10" style="background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,255,255,0.25); color:#ffffff; padding:8px 14px; font-weight:700; border-radius:8px;">10番+ (滿貫/例牌)</button>
+            </div>
+          </div>
+
+          <!-- Question Step 2: Check Applicable Patterns -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:0.95rem; font-weight:700; color:#fff; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+              <span style="background:var(--c-blue-diamond); color:#fff; border-radius:50%; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; font-size:0.8rem;">2</span>
+              Select all matching patterns / yaku (點選所有符合的番種):
+            </div>
+            <div id="quiz-patterns-chips-grid" style="display:flex; flex-wrap:wrap; gap:8px;">
+              <!-- Pattern chips populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div style="display:flex; justify-content:center;">
+            <button id="btn-quiz-submit" class="btn btn-primary" style="padding:12px 36px; font-size:1.05rem; font-weight:700; letter-spacing:0.5px;">
+              🎯 驗證答案 (Check Answer)
+            </button>
+          </div>
+        </div>
+
+        <!-- Quiz Feedback & Grading Result Card -->
+        <div id="quiz-feedback-card" style="display:none; background:rgba(0,0,0,0.4); border-radius:12px; padding:20px; border:2px solid var(--c-blue-diamond); margin-bottom:20px;">
+          <div id="quiz-result-header" style="display:flex; align-items:center; gap:10px; margin-bottom:14px; font-size:1.3rem; font-weight:800;"></div>
+          
+          <!-- Arithmetic Equation Formula -->
+          <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:12px 16px; margin-bottom:14px;">
+            <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Scoring Formula (計番公式):</div>
+            <div id="quiz-formula-text" style="font-size:1.1rem; color:var(--accent-gold); font-weight:700;"></div>
+          </div>
+
+          <!-- Detailed Breakdown List -->
+          <div id="quiz-breakdown-list" style="margin-bottom:16px; display:flex; flex-direction:column; gap:8px;"></div>
+
+          <!-- Appendix 1 Point Adjustments Summary -->
+          <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:12px 16px; margin-bottom:16px;">
+            <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Appendix 1 Points Payout (TVB 2026 附錄一得失分結算):</div>
+            <div id="quiz-payout-summary" style="font-size:0.95rem; color:#fff;"></div>
+          </div>
+
+          <div style="display:flex; justify-content:center;">
+            <button id="btn-quiz-next-after-result" class="btn btn-primary" style="padding:10px 28px; font-size:1rem;">
+              Next Hand ➡️ (進入下一題)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE 2: CUSTOM HAND CALCULATOR -->
+      <div id="fan-pane-custom" style="display:none;">
+        <div style="background:rgba(0,0,0,0.35); padding:16px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); margin-bottom:20px;">
+          <!-- Wind & Condition Selectors -->
+          <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-bottom:14px;">
+            <div class="select-group">
+              <label for="custom-fan-select-round">Round Wind (圈風):</label>
+              <select id="custom-fan-select-round">
+                <option value="1z">東風圈 (East - 1z)</option>
+                <option value="2z">南風圈 (South - 2z)</option>
+                <option value="3z">西風圈 (West - 3z)</option>
+                <option value="4z">北風圈 (North - 4z)</option>
+              </select>
+            </div>
+            <div class="select-group">
+              <label for="custom-fan-select-seat">Seat Wind (門風):</label>
+              <select id="custom-fan-select-seat">
+                <option value="1z">東家 (East - 1z)</option>
+                <option value="2z">南家 (South - 2z)</option>
+                <option value="3z">西家 (West - 3z)</option>
+                <option value="4z">北家 (North - 4z)</option>
+              </select>
+            </div>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-weight:600; color:#fff;">
+              <input type="checkbox" id="check-self-draw" /> 🀄 自摸 (Self-Draw +1 Fan)
+            </label>
+          </div>
+
+          <!-- Hand String Input -->
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+            <input type="text" id="input-fan-tiles" placeholder="e.g. 123m456p789s111z55z" style="flex:1; min-width:260px; font-family:var(--font-mono); font-size:1rem;" value="123m456p789s111z55z" />
+            <button id="btn-calculate-fan" class="btn btn-primary">Calculate Fan (計算番數)</button>
+          </div>
+
+          <!-- Quick presets for Custom Calculator -->
+          <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+            <span style="font-size:0.8rem; color:var(--accent-gold); font-weight:700;">Examples:</span>
+            <button class="btn btn-secondary btn-custom-preset" data-preset="123m456p789s111z55z" style="padding:2px 8px; font-size:0.75rem;">Dragon Pong (1番)</button>
+            <button class="btn btn-secondary btn-custom-preset" data-preset="123m456m789m234p55p" style="padding:2px 8px; font-size:0.75rem;">Ping Hu (平胡 1番)</button>
+            <button class="btn btn-secondary btn-custom-preset" data-preset="123m345m789m555z99m" style="padding:2px 8px; font-size:0.75rem;">Half Flush (混一色 3番)</button>
+            <button class="btn btn-secondary btn-custom-preset" data-preset="111m333m999m555z77m" style="padding:2px 8px; font-size:0.75rem;">Triplets + Half Flush (6番)</button>
+            <button class="btn btn-secondary btn-custom-preset" data-preset="123m456m789m111m99m" style="padding:2px 8px; font-size:0.75rem;">Full Flush (清一色 7番)</button>
+            <button class="btn btn-secondary btn-custom-preset" data-preset="555z666z777z123m99p" style="padding:2px 8px; font-size:0.75rem;">Big 3 Dragons (大三元 8番)</button>
+            <button class="btn btn-secondary btn-custom-preset" data-preset="19m19p19s1234567z1m" style="padding:2px 8px; font-size:0.75rem;">Thirteen Orphans (十三幺 10番)</button>
+          </div>
+        </div>
+
+        <div id="fan-results-box" class="feedback-box" style="display:none;"></div>
+      </div>
+    </section>
+
+    <!-- TAB 5: TOURNAMENT RULES & OFFICIAL WORKSHEET CENTER -->
+    <section id="tab-rules" class="view-section">
+      <!-- Rules Header & Language Toggle -->
+      <div class="rules-header-bar">
+        <div>
+          <div class="section-title" style="margin-bottom:4px;" id="rules-main-title">📜 TVB 2026 Championship Rules & Official Documents</div>
+          <p style="color:var(--c-cosmic-quest); font-size:0.85rem;" id="rules-main-subtitle">
+            Official regulations, scoring matrix, ethical guidelines, and signed game worksheet for the 2026 TVB Mahjong Brain Fitness Championship US Station.
+          </p>
+        </div>
+        <div class="rules-lang-switch">
+          <button class="btn-lang active" data-lang="zh">🌐 繁體中文</button>
+          <button class="btn-lang" data-lang="en">🌐 English</button>
+        </div>
+      </div>
+
+      <!-- Rules Sub-Navigation Tabs -->
+      <div class="rules-subnav">
+        <button class="rules-nav-btn active" data-pane="pane-tournament" id="nav-btn-tournament">🏆 大賽章程與賽制 (Tournament System)</button>
+        <button class="rules-nav-btn" data-pane="pane-game-rules" id="nav-btn-game-rules">🀄 比賽麻將規則 (Game Rules)</button>
+        <button class="rules-nav-btn" data-pane="pane-penalties" id="nav-btn-penalties">⚖️ 違規與處罰 (Fouls & Penalties)</button>
+        <button class="rules-nav-btn" data-pane="pane-fan-tables" id="nav-btn-fan-tables">📊 計番與得失分表 (Fan & Points)</button>
+        <button class="rules-nav-btn" data-pane="pane-worksheet" id="nav-btn-worksheet">📝 官方計分卡工作表 (Game Worksheet)</button>
+      </div>
+
+      <!-- SUB-PANE 1: TOURNAMENT FORMAT & REGULATIONS -->
+      <div id="pane-tournament" class="rules-section-pane active">
+        <div class="rules-card">
+          <div class="rules-card-title">🏆 <span class="t-text" data-zh="A. 比賽宗旨" data-en="A. Tournament Purpose">A. 比賽宗旨</span></div>
+          <div class="rules-card-content">
+            <p class="t-text" data-zh="TVB 麻將健腦大賽（「本賽事」）旨在推廣麻將作為一種鍛煉、增強認知功能、心理健康及社會聯繫的體育運動。" data-en="The TVB Mahjong Brain Fitness Championship ('the Tournament') aims to promote mahjong as a mind sport that exercises the brain, enhances cognitive function, fosters mental wellness, and strengthens social connections.">
+              TVB 麻將健腦大賽（「本賽事」）旨在推廣麻將作為一種鍛煉、增強認知功能、心理健康及社會聯繫的體育運動。
+            </p>
+          </div>
+        </div>
+
+        <div class="rules-card">
+          <div class="rules-card-title">🎖️ <span class="t-text" data-zh="B. 比賽組別與獎項" data-en="B. Divisions & Awards">B. 比賽組別與獎項</span></div>
+          <div class="rules-card-content">
+            <ul>
+              <li class="t-text" data-zh="1. 本賽事獎項分個人冠、亞、季、殿軍及團體金牌獎。" data-en="1. Individual Awards: Champion, 1st Runner-up, 2nd Runner-up, 3rd Runner-up; Team Award: Team Gold Medal.">1. 本賽事獎項分個人冠、亞、季、殿軍及團體金牌獎。</li>
+              <li class="t-text" data-zh="2. 參加者須以個人名義參賽，亦可同時與其他參加者組成隊伍（四人或以上），以團體名義參加。" data-en="2. Participants compete individually and may also form teams of 4 or more to compete for the Team category simultaneously.">2. 參加者須以個人名義參賽，亦可同時與其他參加者組成隊伍（四人或以上），以團體名義參加。</li>
+              <li class="t-text" data-zh="3. 如參加者同時以團體名義參加，大會將根據各團體於外圍賽中每位成員所得總分計算平均分，平均分最高的團體將獲團體金牌獎。" data-en="3. For the Team Gold Medal, the tournament calculates the average score of all members of each team in the Qualifiers. The team with the highest average score wins the Team Gold Medal.">3. 如參加者同時以團體名義參加，大會將根據各團體於外圍賽中每位成員所得總分計算平均分，平均分最高的團體將獲團體金牌獎。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="rules-card">
+          <div class="rules-card-title">🪜 <span class="t-text" data-zh="C. 四大賽程階段與晉級機制" data-en="C. Four Tournament Stages & Advancement">C. 四大賽程階段與晉級機制</span></div>
+          <div class="rules-card-content">
+            <div class="rule-highlight-box">
+              <strong class="t-text" data-zh="⏱️ 每場時限與盤數：" data-en="⏱️ Match Time & Hand Limit:">⏱️ 每場時限與盤數：</strong>
+              <span class="t-text" data-zh="所有賽事均以四圈（即十六盤）或三小時為限，以較早者為準。" data-en="All tournament matches are capped at 4 rounds (16 hands) or 3 hours, whichever occurs earlier.">所有賽事均以四圈（即十六盤）或三小時為限，以較早者為準。</span>
+            </div>
+            <ol>
+              <li>
+                <strong class="t-text" data-zh="外圍賽 (Qualifiers)：" data-en="1. Qualifiers:">外圍賽 (Qualifiers)：</strong>
+                <span class="t-text" data-zh="以抽籤方式分組，於不同地點、日期及時段進行。所有外圍賽結束後，大會將根據參加者的累積分數由高至低排序，並由最高分者依次晉級初賽。" data-en="Groupings assigned via lottery draw across various dates and venues. Upon completion, players are ranked by cumulative score, and top players advance to the Preliminaries.">以抽籤方式分組，於不同地點、日期及時段進行。所有外圍賽結束後，大會將根據參加者的累積分數由高至低排序，並由最高分者依次晉級初賽。</span>
+              </li>
+              <li>
+                <strong class="t-text" data-zh="初賽 (Preliminaries)：" data-en="2. Preliminaries:">初賽 (Preliminaries)：</strong>
+                <span class="t-text" data-zh="以抽籤方式分組，於決賽周末的星期六分上、下午進行。結束後根據累積分數排序，最高分者依次晉級準決賽。" data-en="Held on Saturday of the Finals Weekend (Morning and Afternoon sessions). Top cumulative scorers advance to the Semifinals.">以抽籤方式分組，於決賽周末的星期六分上、下午進行。結束後根據累積分數排序，最高分者依次晉級準決賽。</span>
+              </li>
+              <li>
+                <strong class="t-text" data-zh="準決賽 (Semifinals)：" data-en="3. Semifinals:">準決賽 (Semifinals)：</strong>
+                <span class="t-text" data-zh="於決賽周末的星期日上午進行。賽事結束後，大會根據累積分數排序，排名前四名晉級總決賽。" data-en="Held on Sunday morning of the Finals Weekend. Top 4 cumulative scorers advance to the Grand Finals.">於決賽周末的星期日上午進行。賽事結束後，大會根據累積分數排序，排名前四名晉級總決賽。</span>
+              </li>
+              <li>
+                <strong class="t-text" data-zh="總決賽 (Grand Finals)：" data-en="4. Grand Finals:">總決賽 (Grand Finals)：</strong>
+                <span class="t-text" data-zh="於決賽周末的星期日下午進行。4 名選手決戰四圈，累積分數最高者為冠軍，其次依序為亞軍、季軍及殿軍。" data-en="Held on Sunday afternoon of the Finals Weekend. The 4 finalists compete, and the highest scorer is crowned Champion, followed by 2nd, 3rd, and 4th place.">於決賽周末的星期日下午進行。4 名選手決戰四圈，累積分數最高者為冠軍，其次依序為亞軍、季軍及殿軍。</span>
+              </li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="rules-card">
+          <div class="rules-card-title">⚖️ <span class="t-text" data-zh="D. 座位、缺席與同分裁決" data-en="D. Seating, Attendance & Tiebreakers">D. 座位、缺席與同分裁決</span></div>
+          <div class="rules-card-content">
+            <ul>
+              <li class="t-text" data-zh="選手編號牌：大會為每位參加者安排編號牌並核對身分證，比賽全程必須配戴編號牌。" data-en="Player ID Badge: Each player is assigned a badge verified with valid ID, which must be worn throughout the tournament.">選手編號牌：大會為每位參加者安排編號牌並核對身分證，比賽全程必須配戴編號牌。</li>
+              <li class="t-text" data-zh="座位抽籤：每桌四人及風位由大會抽籤決定，參加者不得自行挑選桌次或指定對象。" data-en="Seating Lottery: 4 players per table and seat winds are drawn via lottery. Players may not choose tables or opponents.">座位抽籤：每桌四人及風位由大會抽籤決定，參加者不得自行挑選桌次或指定對象。</li>
+              <li class="t-text" data-zh="遲到缺席：遲到、中途離開或缺席者將被取消資格。大會可指派替補代打，替補分數不計入排名。" data-en="Absence & Substitutes: Late arrivals or unexcused departures result in disqualification. Official substitutes may play but their scores are unranked.">遲到缺席：遲到、中途離開或缺席者將被取消資格。大會可指派替補代打，替補分數不計入排名。</li>
+              <li class="t-text" data-zh="同分裁決優先級：(1) 累計總得分 ➔ (2) 總番數較多者 ➔ (3) 胡牌次數較多者 ➔ (4) 出銃次數較少者。" data-en="Tiebreaker Hierarchy: (1) Total Cumulative Points ➔ (2) Total Fan Count ➔ (3) Number of Winning Hands (Agari) ➔ (4) Fewest Times Dealing into Wins (Shooter count).">同分裁決優先級：(1) 累計總得分 ➔ (2) 總番數較多者 ➔ (3) 胡牌次數較多者 ➔ (4) 出銃次數較少者。</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-PANE 2: GAME RULES & ETIQUETTE -->
+      <div id="pane-game-rules" class="rules-section-pane">
+        <div class="rules-card">
+          <div class="rules-card-title">🀄 <span class="t-text" data-zh="A. 牌具規範：136張標準零花牌" data-en="A. Tile Set: 136 Standard Tiles (Zero Flowers)">A. 牌具規範：136張標準零花牌</span></div>
+          <div class="rules-card-content">
+            <p class="t-text" data-zh="本賽事不設花牌，僅採用 136 張標準麻將牌：" data-en="This tournament does not use flower or season tiles, utilizing exactly 136 standard tiles:">本賽事不設花牌，僅採用 136 張標準麻將牌：</p>
+            <ul>
+              <li><strong>萬子 (Characters, 1m–9m)：</strong> 36 張 / 36 tiles</li>
+              <li><strong>筒子 (Dots / Circles, 1p–9p)：</strong> 36 張 / 36 tiles</li>
+              <li><strong>索子 (Bamboos, 1s–9s)：</strong> 36 張 / 36 tiles</li>
+              <li><strong>風牌 (Winds - 東南西北, 1z–4z)：</strong> 16 張 / 16 tiles</li>
+              <li><strong>三元牌 (Dragons - 中發白, 5z–7z)：</strong> 12 張 / 12 tiles</li>
+            </ul>
+            <div class="rule-alert-box">
+              <strong class="t-text" data-zh="🚫 嚴格排除七對子與雞胡：" data-en="🚫 Seven Pairs and Chicken Hands Strictly Excluded:">🚫 嚴格排除七對子與雞胡：</strong>
+              <span class="t-text" data-zh="本大賽嚴禁「七對子 / 嚦咕嚦咕」（不算有效胡牌牌型）。手牌必須為「4副面子（順子/刻子/槓）+ 1對眼」或「十三幺」。且最低須達 1 番起胡（0番雞胡視為詐胡）。" data-en="Seven Pairs (七對子 / 嚦咕嚦咕) is strictly invalid. Hands must be 4 melds + 1 pair or Thirteen Orphans. Minimum 1 Fan is strictly required (0-Fan chicken hands count as False Win / Chombo).">本大賽嚴禁「七對子 / 嚦咕嚦咕」（不算有效胡牌牌型）。手牌必須為「4副面子（順子/刻子/槓）+ 1對眼」或「十三幺」。且最低須達 1 番起胡（0番雞胡視為詐胡）。</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rules-card">
+          <div class="rules-card-title">🔄 <span class="t-text" data-zh="B. 行牌規定與過莊機制" data-en="B. Turn Progression & Dealer Rotation">B. 行牌規定與過莊機制</span></div>
+          <div class="rules-card-content">
+            <ol>
+              <li class="t-text" data-zh="起手配牌：莊家起手摸 14 張牌，其餘三家摸 13 張牌。莊家打出第一張牌開啟牌局。" data-en="Starting Deal: Dealer draws 14 tiles; other 3 players draw 13 tiles. Dealer discards first.">起手配牌：莊家起手摸 14 張牌，其餘三家摸 13 張牌。莊家打出第一張牌開啟牌局。</li>
+              <li class="t-text" data-zh="輪流行牌：按逆時針方向輪流摸牌與打牌（左為上家，右為下家）。牌一經打出即視為亮牌，不得收回。" data-en="Turn Order: Counter-clockwise turn order (left is Upper Seat, right is Lower Seat). Discards are final once played.">輪流行牌：按逆時針方向輪流摸牌與打牌（左為上家，右為下家）。牌一經打出即視為亮牌，不得收回。</li>
+              <li class="t-text" data-zh="報牌規定：出牌者於出牌時必須清楚報上牌名。" data-en="Tile Announcement: Players must clearly announce the tile name when discarding.">報牌規定：出牌者於出牌時必須清楚報上牌名。</li>
+              <li class="t-text" data-zh="優先權次序：胡牌 ➔ 碰牌 / 槓牌 ➔ 上牌。上家未出牌前，下家不得提前摸牌。" data-en="Priority Order: Winning (Hu) ➔ Pong / Kong ➔ Chow. Lower seat must not draw until upper seat discards.">優先權次序：胡牌 ➔ 碰牌 / 槓牌 ➔ 上牌。上家未出牌前，下家不得提前摸牌。</li>
+              <li class="t-text" data-zh="摸和與過莊：摸牌至最後一張牌為止。摸和需過莊；莊家胡牌亦需過莊（每盤均過莊，每圈四盤，四圈共十六盤）。" data-en="Exhaust Draw & Dealer Passing: Wall is drawn to the final tile. Dealer passes on all hands, including exhaust draws and dealer wins (16 hands total per match).">摸和與過莊：摸牌至最後一張牌為止。摸和需過莊；莊家胡牌亦需過莊（每盤均過莊，每圈四盤，四圈共十六盤）。</li>
+              <li class="t-text" data-zh="截胡：如同時間有多於一名胡牌者，由出牌者的下家/上家優先順序中，最接近出牌者逆時針順位者胡牌（上家截胡）。" data-en="Simultaneous Wins (Robbing / Intercept): If multiple players claim a discard, turn order priority applies (closest counter-clockwise seat wins).">截胡：如同時間有多於一名胡牌者，由出牌者的下家/上家優先順序中，最接近出牌者逆時針順位者胡牌（上家截胡）。</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="rules-card">
+          <div class="rules-card-title">⚡ <span class="t-text" data-zh="C. 特殊競技規則：搶槓與十二張包自摸" data-en="C. Special Rules: Robbing the Kong & 12-Tile Liability">C. 特殊競技規則：搶槓與十二張包自摸</span></div>
+          <div class="rules-card-content">
+            <ul>
+              <li>
+                <strong class="t-text" data-zh="搶槓 (Robbing the Kong)：" data-en="Robbing the Kong:">搶槓 (Robbing the Kong)：</strong>
+                <span class="t-text" data-zh="如一方開槓（不分明槓或暗槓），而該槓牌恰好是另一方所聽之胡牌，該另一方可立即「搶槓」宣告胡牌。" data-en="If a player declares a Kong (applies to both exposed and concealed Kongs), any opponent waiting on that tile may declare an immediate win by Robbing the Kong.">如一方開槓（不分明槓或暗槓），而該槓牌恰好是另一方所聽之胡牌，該另一方可立即「搶槓」宣告胡牌。</span>
+              </li>
+              <li>
+                <strong class="t-text" data-zh="十二張包自摸 (12-Tile Penalty Liability)：" data-en="12-Tile Penalty Liability (Full Baao):">十二張包自摸 (12-Tile Penalty Liability)：</strong>
+                <span class="t-text" data-zh="（只適用於最後胡牌為清一色、大三元、大四喜或字一色）如一方已亮明三組吃碰槓（9張牌），另一方打出的牌使該方再完成第四組亮明（共亮明12張牌），若該方隨後自摸胡牌，出牌放槓/放碰之一方須「包自摸」，承擔包括其在內的三方全部失分！" data-en="(Applicable only to Full Flush, Big Three Dragons, Big Four Winds, or All Honors) If a player has exposed 3 melds (9 tiles) and an opponent feeds them their 4th exposed meld (12 tiles), that opponent incurs Full Liability (包自摸) and pays all 3 players' losses if the player self-draws.">（只適用於最後胡牌為清一色、大三元、大四喜或字一色）如一方已亮明三組吃碰槓（9張牌），另一方打出的牌使該方再完成第四組亮明（共亮明12張牌），若該方隨後自摸胡牌，出牌放槓/放碰之一方須「包自摸」，承擔包括其在內的三方全部失分！</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-PANE 3: VIOLATIONS & PENALTIES MATRIX -->
+      <div id="pane-penalties" class="rules-section-pane">
+        <div class="rules-card">
+          <div class="rules-card-title">⚖️ <span class="t-text" data-zh="官方裁判處罰條例總表 (Fouls & Penalties Matrix)" data-en="Official Referee Penalties Matrix">官方裁判處罰條例總表 (Fouls & Penalties Matrix)</span></div>
+          <div class="rules-card-content">
+            <p class="t-text" data-zh="大會裁判將根據以下標準執行罰分與處分。所有罰分將由裁判即時於計分卡上登記扣減。" data-en="Referees strictly enforce penalties per the official tournament table below. All point deductions are registered on the official scorecard.">
+              大會裁判將根據以下標準執行罰分與處分。所有罰分將由裁判即時於計分卡上登記扣減。
+            </p>
+            <div class="table-wrapper" style="margin-top:12px;">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:80px;" class="t-text" data-zh="編號" data-en="Code">編號</th>
+                    <th class="t-text" data-zh="違規行為 (Violation Description)" data-en="Violation Description">違規行為 (Violation Description)</th>
+                    <th style="width:260px;" class="t-text" data-zh="處罰規定 (Official Penalty)" data-en="Official Penalty">處罰規定 (Official Penalty)</th>
+                    <th style="width:110px;" class="t-text" data-zh="等級" data-en="Severity">等級</th>
+                  </tr>
+                </thead>
+                <tbody id="rules-penalty-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-PANE 4: FAN TABLES & POINT SYSTEM -->
+      <div id="pane-fan-tables" class="rules-section-pane">
+        <!-- Appendix 1: Points Table -->
+        <div class="rules-card">
+          <div class="rules-card-title">📊 <span class="t-text" data-zh="附錄一：番數得失分表 (Appendix 1: Point Conversion Table)" data-en="Appendix 1: Point Conversion Table">附錄一：番數得失分表 (Appendix 1: Point Conversion Table)</span></div>
+          <div class="rules-card-content">
+            <p class="t-text" data-zh="本賽事採「全銃制」（出銃者包賠全部分數）。自摸時其餘三家各付三分之一分數。最低 1 番起胡，最高 10 番封頂。" data-en="The tournament utilizes Full Shooter Liability (discarder pays full amount). On Self-Draw, each of the other 3 players pays an equal 1/3 share. Minimum 1 Fan, Maximum 10 Fan cap.">
+              本賽事採「全銃制」（出銃者包賠全部分數）。自摸時其餘三家各付三分之一分數。最低 1 番起胡，最高 10 番封頂。
+            </p>
+            <div class="table-wrapper" style="margin-top:12px;">
+              <table>
+                <thead>
+                  <tr>
+                    <th rowspan="2" style="text-align:center;" class="t-text" data-zh="番數 (Fan)" data-en="Fan">番數 (Fan)</th>
+                    <th colspan="2" style="text-align:center; background:rgba(7,108,192,0.25);" class="t-text" data-zh="出銃胡牌 (Normal Win via Discard)" data-en="Normal Win (via Discard)">出銃胡牌 (Normal Win via Discard)</th>
+                    <th colspan="2" style="text-align:center; background:rgba(52,211,153,0.2);" class="t-text" data-zh="自摸胡牌 (Self-Draw Win)" data-en="Self-Draw Win">自摸胡牌 (Self-Draw Win)</th>
+                  </tr>
+                  <tr>
+                    <th style="text-align:center;" class="t-text" data-zh="胡牌方 (Winner)" data-en="Winner Gain">胡牌方 (Winner)</th>
+                    <th style="text-align:center;" class="t-text" data-zh="出銃方 (Shooter)" data-en="Shooter Loss">出銃方 (Shooter)</th>
+                    <th style="text-align:center;" class="t-text" data-zh="自摸方 (Winner)" data-en="Winner Gain">自摸方 (Winner)</th>
+                    <th style="text-align:center;" class="t-text" data-zh="其餘每方 (Each Opponent)" data-en="Each Opponent">其餘每方 (Each Opponent)</th>
+                  </tr>
+                </thead>
+                <tbody id="rules-conversion-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Appendix 3: Approved Winning Hand Types -->
+        <div class="rules-card">
+          <div class="rules-card-title">🀄 <span class="t-text" data-zh="附錄三：指定胡牌種類表 (Appendix 3: Approved Winning Hand Catalog)" data-en="Appendix 3: Approved Winning Hand Catalog">附錄三：指定胡牌種類表 (Appendix 3: Approved Winning Hand Catalog)</span></div>
+          <div class="rules-card-content">
+            <p class="t-text" data-zh="凡未列於本表內的其他胡牌種類（例如花胡、七對子、十三不靠等），一概不予承認。" data-en="Any winning hand type not listed in this official schedule (such as Flower hands, Seven Pairs, etc.) is strictly invalid.">
+              凡未列於本表內的其他胡牌種類（例如花胡、七對子、十三不靠等），一概不予承認。
+            </p>
+            <div class="table-wrapper" style="margin-top:12px;">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:80px;" class="t-text" data-zh="編號" data-en="Code">編號</th>
+                    <th style="width:200px;" class="t-text" data-zh="胡牌種類 (Hand Pattern)" data-en="Hand Pattern">胡牌種類 (Hand Pattern)</th>
+                    <th style="width:90px; text-align:center;" class="t-text" data-zh="番數 (Fan)" data-en="Fan">番數 (Fan)</th>
+                    <th class="t-text" data-zh="牌型定義與限制說明 (Definition & Rules)" data-en="Definition & Rules">牌型定義與限制說明 (Definition & Rules)</th>
+                    <th style="width:200px;" class="t-text" data-zh="範例參考 (Example)" data-en="Example">範例參考 (Example)</th>
+                  </tr>
+                </thead>
+                <tbody id="rules-fan-rules-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-PANE 5: OFFICIAL GAME WORKSHEET SIMULATOR -->
+      <div id="pane-worksheet" class="rules-section-pane">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+          <div>
+            <h3 style="color:#fff; font-size:1.1rem;" class="t-text" data-zh="附錄二：大賽官方比賽計分卡與簽名工作表" data-en="Appendix 2: Official Tournament Game Scorecard & Worksheet">附錄二：大賽官方比賽計分卡與簽名工作表</h3>
+            <p style="color:var(--c-cosmic-quest); font-size:0.82rem;" class="t-text" data-zh="支持即時記錄16盤對局、自動核算番數得失分，並提供選手與裁判電子簽名欄位，可直接列印存檔。" data-en="Live 16-hand match recording with automated point balance calculations and digital signatures for all 4 players and the referee. Printable for official filing.">
+              支持即時記錄16盤對局、自動核算番數得失分，並提供選手與裁判電子簽名欄位，可直接列印存檔。
+            </p>
+          </div>
+          <div class="worksheet-actions" style="margin-top:0;">
+            <button id="btn-load-sample-match" class="btn btn-secondary" style="font-size:0.8rem; padding:6px 12px;">
+              🎲 Load Sample Tournament Match (載入範例對局)
+            </button>
+            <button id="btn-reset-worksheet" class="btn btn-secondary" style="font-size:0.8rem; padding:6px 12px;">
+              🗑️ Reset Scorecard (清空計分卡)
+            </button>
+            <button id="btn-print-scorecard" class="btn btn-primary" style="font-size:0.8rem; padding:6px 14px;">
+              🖨️ Print / Export Official Scorecard (列印計分卡)
+            </button>
+          </div>
+        </div>
+
+        <!-- The Printable Official Worksheet -->
+        <div id="official-scorecard-printable" class="worksheet-container">
+          <div class="worksheet-header">
+            <div class="worksheet-title">TVB 麻將健腦大賽 2026 - 美國站</div>
+            <div class="worksheet-subtitle">【官方比賽計分卡 / OFFICIAL TOURNAMENT SCORECARD】(附錄二)</div>
+          </div>
+
+          <!-- Metadata Grid -->
+          <div class="worksheet-meta-grid">
+            <div class="worksheet-field">
+              <label>桌號 / Table No.:</label>
+              <input type="text" id="ws-meta-table" value="Table #08" />
+            </div>
+            <div class="worksheet-field">
+              <label>賽事階段 / Stage:</label>
+              <input type="text" id="ws-meta-stage" value="外圍賽 / Qualifiers" />
+            </div>
+            <div class="worksheet-field">
+              <label>比賽日期 / Date:</label>
+              <input type="text" id="ws-meta-date" value="2026-08-22" />
+            </div>
+            <div class="worksheet-field">
+              <label>比賽時間 / Time:</label>
+              <input type="text" id="ws-meta-time" value="14:00 - 17:00" />
+            </div>
+            <div class="worksheet-field">
+              <label>比賽地點 / Venue:</label>
+              <input type="text" id="ws-meta-venue" value="TVB Main Arena - Los Angeles" />
+            </div>
+            <div class="worksheet-field">
+              <label>大會裁判 / Referee Name:</label>
+              <input type="text" id="ws-meta-referee" value="David Wong (黃裁判長)" />
+            </div>
+          </div>
+
+          <!-- 4 Players Registration -->
+          <table class="worksheet-players-table">
+            <thead>
+              <tr>
+                <th style="width:12%;">風位 (Seat)</th>
+                <th style="width:28%;">參加者姓名 (Player Name)</th>
+                <th style="width:20%;">參賽編號 (Player ID)</th>
+                <th style="width:20%;">所屬隊伍 (Team Name)</th>
+                <th style="width:20%;">最終累積分數 (Final Total)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>東 (East - 1z)</strong></td>
+                <td><input type="text" id="ws-p1-name" value="陳大文 (David Chan)" /></td>
+                <td><input type="text" id="ws-p1-id" value="US-LA-0101" /></td>
+                <td><input type="text" id="ws-p1-team" value="雀神爭霸隊" /></td>
+                <td><strong id="ws-p1-final" style="color:#076cc0; font-size:1.1rem;">0</strong></td>
+              </tr>
+              <tr>
+                <td><strong>南 (South - 2z)</strong></td>
+                <td><input type="text" id="ws-p2-name" value="李志明 (Michael Lee)" /></td>
+                <td><input type="text" id="ws-p2-id" value="US-LA-0102" /></td>
+                <td><input type="text" id="ws-p2-team" value="雀神爭霸隊" /></td>
+                <td><strong id="ws-p2-final" style="color:#076cc0; font-size:1.1rem;">0</strong></td>
+              </tr>
+              <tr>
+                <td><strong>西 (West - 3z)</strong></td>
+                <td><input type="text" id="ws-p3-name" value="張淑芬 (Grace Cheung)" /></td>
+                <td><input type="text" id="ws-p3-id" value="US-LA-0103" /></td>
+                <td><input type="text" id="ws-p3-team" value="灣區健腦隊" /></td>
+                <td><strong id="ws-p3-final" style="color:#076cc0; font-size:1.1rem;">0</strong></td>
+              </tr>
+              <tr>
+                <td><strong>北 (North - 4z)</strong></td>
+                <td><input type="text" id="ws-p4-name" value="黃子華 (Dayo Wong)" /></td>
+                <td><input type="text" id="ws-p4-id" value="US-LA-0104" /></td>
+                <td><input type="text" id="ws-p4-team" value="歡樂麻將社" /></td>
+                <td><strong id="ws-p4-final" style="color:#076cc0; font-size:1.1rem;">0</strong></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- 16 Hands Scoring Grid -->
+          <div style="font-weight:800; font-size:0.9rem; margin-bottom:6px; color:#374151;">
+            對局得分詳細記錄表 (16 Hands Match Log):
+          </div>
+          <table class="worksheet-scoring-grid">
+            <thead>
+              <tr>
+                <th style="width:8%;">盤數 (Hand)</th>
+                <th style="width:12%;">圈風/莊位</th>
+                <th style="width:20%;">胡牌種類 (Winning Type)</th>
+                <th style="width:8%;">番數</th>
+                <th style="width:13%;">東 (East) ±</th>
+                <th style="width:13%;">南 (South) ±</th>
+                <th style="width:13%;">西 (West) ±</th>
+                <th style="width:13%;">北 (North) ±</th>
+              </tr>
+            </thead>
+            <tbody id="worksheet-hands-body">
+              <!-- 16 hand rows generated by JS -->
+            </tbody>
+            <tfoot>
+              <tr style="background:#f3f4f6; font-weight:800;">
+                <td colspan="4" style="text-align:right; font-size:0.9rem;">總分結算 (Cumulative Total Points):</td>
+                <td id="ws-sum-p1" style="font-size:1rem; color:#076cc0;">0</td>
+                <td id="ws-sum-p2" style="font-size:1rem; color:#076cc0;">0</td>
+                <td id="ws-sum-p3" style="font-size:1rem; color:#076cc0;">0</td>
+                <td id="ws-sum-p4" style="font-size:1rem; color:#076cc0;">0</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <!-- Signatures Section -->
+          <div class="worksheet-sign-grid">
+            <div class="sign-box">
+              <div class="sign-box-title">東位參加者簽名 (East Signature)</div>
+              <canvas id="sign-canvas-p1" class="sign-canvas"></canvas>
+              <div class="sign-tools">
+                <span style="font-size:0.7rem; color:#6b7280;">Sign above</span>
+                <button class="btn-sign-clear" data-canvas="sign-canvas-p1">Clear</button>
+              </div>
+            </div>
+            <div class="sign-box">
+              <div class="sign-box-title">南位參加者簽名 (South Signature)</div>
+              <canvas id="sign-canvas-p2" class="sign-canvas"></canvas>
+              <div class="sign-tools">
+                <span style="font-size:0.7rem; color:#6b7280;">Sign above</span>
+                <button class="btn-sign-clear" data-canvas="sign-canvas-p2">Clear</button>
+              </div>
+            </div>
+            <div class="sign-box">
+              <div class="sign-box-title">西位參加者簽名 (West Signature)</div>
+              <canvas id="sign-canvas-p3" class="sign-canvas"></canvas>
+              <div class="sign-tools">
+                <span style="font-size:0.7rem; color:#6b7280;">Sign above</span>
+                <button class="btn-sign-clear" data-canvas="sign-canvas-p3">Clear</button>
+              </div>
+            </div>
+            <div class="sign-box">
+              <div class="sign-box-title">北位參加者簽名 (North Signature)</div>
+              <canvas id="sign-canvas-p4" class="sign-canvas"></canvas>
+              <div class="sign-tools">
+                <span style="font-size:0.7rem; color:#6b7280;">Sign above</span>
+                <button class="btn-sign-clear" data-canvas="sign-canvas-p4">Clear</button>
+              </div>
+            </div>
+            <div class="sign-box" style="border-color:#076cc0; background:#eff6ff;">
+              <div class="sign-box-title" style="color:#076cc0;">大會裁判簽名確認 (Referee Sign)</div>
+              <canvas id="sign-canvas-ref" class="sign-canvas"></canvas>
+              <div class="sign-tools">
+                <span style="font-size:0.7rem; color:#076cc0;">Official Sign-off</span>
+                <button class="btn-sign-clear" data-canvas="sign-canvas-ref">Clear</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
