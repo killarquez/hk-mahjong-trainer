@@ -2461,6 +2461,7 @@
   let isBotProcessing = false;
   let isBotHudVisible = true;
   let autoStepTimer = null;
+  let currentClaimPrompt = null;
 
   function initBotGameListeners() {
     document.getElementById('btn-restart-bot-game')?.addEventListener('click', () => {
@@ -2498,6 +2499,15 @@
     });
     document.getElementById('btn-claim-kong')?.addEventListener('click', () => {
       sendBotClaimAction('KONG');
+    });
+    document.getElementById('btn-claim-chow')?.addEventListener('click', () => {
+      const prompt = currentClaimPrompt;
+      const opts = prompt?.chow_options || [];
+      if (opts.length > 0) {
+        sendBotClaimAction('CHOW', opts[0]);
+      } else {
+        sendBotClaimAction('CHOW');
+      }
     });
     document.getElementById('btn-claim-pass')?.addEventListener('click', () => {
       sendBotClaimAction('PASS');
@@ -2639,6 +2649,7 @@
 
   function renderBotGameState(state) {
     if (!state || !state.players) return;
+    currentClaimPrompt = state.user_claim_prompt || null;
 
     const roundBadge = document.getElementById('bot-game-round-badge');
     const wallCount = document.getElementById('bot-game-wall-count');

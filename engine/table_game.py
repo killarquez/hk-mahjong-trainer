@@ -689,7 +689,11 @@ class TableMatchGame:
 
         if action == "CHOW":
             if not meld:
-                raise ValueError("Meld required for Chow.")
+                user_opts = self.get_user_claim_options(disc_tile, disc_idx)
+                if user_opts.get("chow_options"):
+                    meld = user_opts["chow_options"][0]
+                else:
+                    raise ValueError("Meld required for Chow.")
             if len(self.rivers[disc_idx]) > 0:
                 self.rivers[disc_idx].pop()
             for t in meld:
