@@ -71,8 +71,15 @@ def startup_event():
 
 @app.get("/", response_class=HTMLResponse)
 def read_root():
-    """Serve main web UI frontend."""
-    return FileResponse("static/index.html")
+    """Serve main web UI frontend with no-cache headers to prevent stale JS/CSS."""
+    return FileResponse(
+        "static/index.html",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+    )
 
 @app.get("/api/health")
 def health_check():
