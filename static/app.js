@@ -346,6 +346,7 @@
   let userHasDiscardedCurrentHand = false;
   let builderOpenMelds = [];
   let botSpeedMs = 600;
+  let botShotClockDuration = 0;
   let botTournamentDiscards = 0;
   let botTournamentOptimal = 0;
 
@@ -808,6 +809,20 @@
         const keyIndex = SHORTCUT_KEYS.indexOf(e.key.toLowerCase());
         if (keyIndex >= 0 && keyIndex < currentHand.length) {
           handleUserDiscard(currentHand[keyIndex]);
+        }
+      }
+
+      // Bot Arena Keyboard Shortcuts
+      const botSection = document.getElementById('tab-bots');
+      if (botSection && botSection.classList.contains('active') && currentBotGameState) {
+        const userTiles = currentBotGameState.players?.[1]?.hand_tiles || [];
+        const isUserTurn = (!currentBotGameState.game_over && currentBotGameState.current_turn_index === 1 && (userTiles.length % 3 === 2 || currentBotGameState.waiting_for_user_discard));
+        if (isUserTurn && !isDiscardInFlight) {
+          const keyIndex = SHORTCUT_KEYS.indexOf(e.key.toLowerCase());
+          if (keyIndex >= 0 && keyIndex < userTiles.length) {
+            e.preventDefault();
+            discardBotUserTile(userTiles[keyIndex]);
+          }
         }
       }
     });
@@ -3199,7 +3214,7 @@
 
     const userRack = document.getElementById('bot-user-tiles-rack');
     const userTiles = state.players[1]?.hand_tiles || [];
-    const isUserTurn = (state.current_turn_index === 1 && (userTiles.length % 3 === 2 || state.waiting_for_user_discard));
+    const isUserTurn = (!state.game_over && state.current_turn_index === 1 && (userTiles.length % 3 === 2 || state.waiting_for_user_discard));
 
     // Shot Clock activation logic for Human Player
     if (!state.game_over && (isUserTurn || (state.waiting_for_user_claim && currentClaimPrompt))) {
@@ -3213,8 +3228,10 @@
     if (userRack) {
       userRack.innerHTML = userTiles.map((t, idx) => {
         const isDrawn = ((userTiles.length % 3 === 2) && state.current_turn_index === 1 && (state.drawn_tile ? (t === state.drawn_tile && idx === userTiles.lastIndexOf(t)) : idx === userTiles.length - 1));
+        const shortcut = SHORTCUT_KEYS[idx] || '';
         return `
-          <div class="user-interactive-tile ${isDrawn ? 'drawn-tile' : ''}" data-tile="${t}" title="Click to discard ${t}">
+          <div class="user-interactive-tile ${isDrawn ? 'drawn-tile' : ''}" data-tile="${t}" data-idx="${idx}" title="${isUserTurn ? `Click to discard ${t} (Key: ${shortcut})` : t}">
+            <span class="tile-shortcut" style="font-size:0.65rem; font-weight:700; color:#60a5fa; margin-bottom:1px; line-height:1;">${isUserTurn ? shortcut : ''}</span>
             <span class="tile-name-label">${t}</span>
             <img src="/static/tiles/${t}.png?v=4" alt="${t}" />
             <span style="font-size:0.6rem; color:#6b7280;">${isDrawn ? 'DRAW' : ''}</span>
@@ -3223,13 +3240,14 @@
       }).join('');
 
       userRack.querySelectorAll('.user-interactive-tile').forEach(el => {
-        el.addEventListener('click', (e) => {
+        const triggerDiscard = (e) => {
           if (!isUserTurn) return;
-          const tile = e.currentTarget.getAttribute('data-tile');
+          const tile = el.getAttribute('data-tile');
           if (tile) {
             discardBotUserTile(tile);
           }
-        });
+        };
+        el.addEventListener('click', triggerDiscard);
       });
     }
 

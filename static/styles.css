@@ -1866,11 +1866,18 @@ tr.row-optimal {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   position: relative;
   user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
+  pointer-events: auto;
 }
 
-.user-interactive-tile:hover {
-  transform: translateY(-10px);
+.user-interactive-tile * {
+  pointer-events: none;
+}
+
+.user-interactive-tile:hover, .user-interactive-tile:active {
+  transform: translateY(-8px);
   border-color: var(--c-blue-diamond);
   box-shadow: 0 10px 16px rgba(7, 108, 192, 0.5);
 }
@@ -1892,6 +1899,29 @@ tr.row-optimal {
   font-weight: 700;
   color: #1f2937;
   line-height: 1;
+}
+
+@media (max-width: 768px) {
+  .user-hand-interactive-rack {
+    padding: 6px 4px;
+    gap: 2px;
+    justify-content: flex-start;
+  }
+  .user-interactive-tile {
+    width: 38px;
+    height: 58px;
+    padding: 2px 1px;
+  }
+  .user-interactive-tile img {
+    width: 26px;
+    height: 36px;
+  }
+  .user-interactive-tile .tile-name-label {
+    font-size: 0.58rem;
+  }
+  .user-interactive-tile.drawn-tile {
+    margin-left: 6px;
+  }
 }
 
 /* Melds Container */

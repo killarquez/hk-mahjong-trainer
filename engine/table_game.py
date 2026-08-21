@@ -23,7 +23,7 @@ from engine.tiles import (
 from engine.shanten import calculate_tvb_shanten
 from engine.ukeire import calculate_ukeire_for_13
 from engine.bot_ai import MahjongBotAI
-from fan_calculator import calculate_fan
+from fan_calculator import calculate_fan, get_point_payout_details
 from evaluator import evaluate_14_hand
 
 ACTIVE_TABLE_GAMES: Dict[str, "TableMatchGame"] = {}
@@ -62,6 +62,7 @@ class TableMatchGame:
         self.game_over = False
         self.match_over = False
         self.winner_info: Optional[Dict[str, Any]] = None
+        self.user_claim_prompt: Optional[Dict[str, Any]] = None
         self.final_standings: List[Dict[str, Any]] = []
         self.match_logs: List[str] = []
 
@@ -106,6 +107,7 @@ class TableMatchGame:
         self.rivers = [[], [], [], []]
         self.game_over = False
         self.winner_info = None
+        self.user_claim_prompt = None
         self.user_passed_last_discard = False
 
         # 1. Update Prevailing Round Wind (圈風) for 16-hand match:
@@ -235,6 +237,7 @@ class TableMatchGame:
         self.rivers[player_idx].append({"tile": tile, "is_claimed": False})
         self.last_discard = {"player_index": player_idx, "tile": tile}
         self.user_passed_last_discard = False
+        self.user_claim_prompt = None
         p_name = self.player_names[player_idx]
         t_info = TILE_INFO_MAP[tile]
         self.match_logs.append(f"{p_name} discarded {t_info['chinese']} ({tile}).")
@@ -261,14 +264,11 @@ class TableMatchGame:
             disc_idx = self.last_discard["player_index"]
 
             # First: check if Human Player (index 1) has claim available (and hasn't passed)
-            if not self.user_passed_last_discard:
+            if not self.user_passed_last_discard and disc_idx != 1:
                 user_claims = self.get_user_claim_options(disc_tile, disc_idx)
                 if user_claims["can_win"] or user_claims["can_pong"] or user_claims["can_kong"] or user_claims["can_chow"]:
-                    return {
-                        **self.get_state(),
-                        "user_claim_prompt": user_claims,
-                        "waiting_for_user_claim": True
-                    }
+                    self.user_claim_prompt = user_claims
+                    return self.get_state()
 
             # Check if any Bot claims Win > Pong/Kong > Chow
             # Check in turn order starting from discarder + 1
@@ -295,27 +295,21 @@ class TableMatchGame:
                     if claim["action"] in ["PONG", "KONG"]:
                         self.execute_bot_pong_or_kong(b_idx, disc_tile, claim["action"])
                         # Check claims on the bot's new discard
-                        if not self.user_passed_last_discard and self.last_discard:
+                        if not self.user_passed_last_discard and self.last_discard and self.last_discard["player_index"] != 1:
                             user_claims = self.get_user_claim_options(self.last_discard["tile"], self.last_discard["player_index"])
                             if user_claims["can_win"] or user_claims["can_pong"] or user_claims["can_kong"] or user_claims["can_chow"]:
-                                return {
-                                    **self.get_state(),
-                                    "user_claim_prompt": user_claims,
-                                    "waiting_for_user_claim": True
-                                }
+                                self.user_claim_prompt = user_claims
+                                return self.get_state()
                         return self.get_state()
 
                     if claim["action"] == "CHOW" and (disc_idx == (b_idx - 1) % 4):
                         self.execute_bot_chow(b_idx, disc_tile, claim["meld"])
                         # Check claims on the bot's new discard
-                        if not self.user_passed_last_discard and self.last_discard:
+                        if not self.user_passed_last_discard and self.last_discard and self.last_discard["player_index"] != 1:
                             user_claims = self.get_user_claim_options(self.last_discard["tile"], self.last_discard["player_index"])
                             if user_claims["can_win"] or user_claims["can_pong"] or user_claims["can_kong"] or user_claims["can_chow"]:
-                                return {
-                                    **self.get_state(),
-                                    "user_claim_prompt": user_claims,
-                                    "waiting_for_user_claim": True
-                                }
+                                self.user_claim_prompt = user_claims
+                                return self.get_state()
                         return self.get_state()
 
             # No claims on last discard
@@ -401,12 +395,8 @@ class TableMatchGame:
             else:
                 self.match_logs.append("👉 Your turn! Please select a tile to discard.")
 
-            resp = {
-                **self.get_state(),
-                "waiting_for_user_discard": True
-            }
             if can_win or can_kong:
-                resp["user_claim_prompt"] = {
+                self.user_claim_prompt = {
                     "can_win": can_win,
                     "is_self_draw": True,
                     "win_fan": win_fan,
@@ -417,9 +407,10 @@ class TableMatchGame:
                     "can_chow": False,
                     "chow_options": []
                 }
-                resp["waiting_for_user_claim"] = True
+            else:
+                self.user_claim_prompt = None
 
-            return resp
+            return self.get_state()
 
         # If it's a Bot turn:
         bot = self.bots[curr_idx]
@@ -490,14 +481,11 @@ class TableMatchGame:
         self.execute_discard(curr_idx, chosen_discard)
 
         # Check if Human Player (index 1) has claim available on this discard
-        if not self.user_passed_last_discard:
+        if not self.user_passed_last_discard and curr_idx != 1:
             user_claims = self.get_user_claim_options(chosen_discard, curr_idx)
             if user_claims["can_win"] or user_claims["can_pong"] or user_claims["can_kong"] or user_claims["can_chow"]:
-                return {
-                    **self.get_state(),
-                    "user_claim_prompt": user_claims,
-                    "waiting_for_user_claim": True
-                }
+                self.user_claim_prompt = user_claims
+                return self.get_state()
 
         return self.get_state()
 
@@ -666,26 +654,23 @@ class TableMatchGame:
                 except Exception:
                     pass
 
-            resp = {
-                **self.get_state(),
-                "waiting_for_user_discard": True
-            }
-            if user_self_draw_claim:
-                resp["user_claim_prompt"] = user_self_draw_claim
-                resp["waiting_for_user_claim"] = True
+            self.user_claim_prompt = user_self_draw_claim
+            return self.get_state()
 
-            return resp
+        if action == "PASS":
+            if not self.last_discard:
+                # User dismissed their own self-draw / self-kong prompt to discard normally
+                self.user_claim_prompt = None
+                return self.get_state()
+            self.match_logs.append("You passed on the discard.")
+            self.user_passed_last_discard = True
+            return self.step_game_loop()
 
         if not self.last_discard:
             raise ValueError("No active discard to claim.")
 
         disc_tile = self.last_discard["tile"]
         disc_idx = self.last_discard["player_index"]
-
-        if action == "PASS":
-            self.match_logs.append("You passed on the discard.")
-            self.user_passed_last_discard = True
-            return self.step_game_loop()
 
         if action == "PONG":
             if len(self.rivers[disc_idx]) > 0:
@@ -697,10 +682,8 @@ class TableMatchGame:
             self.current_turn_index = user_idx
             self.last_discard = None
             self.user_passed_last_discard = False
-            return {
-                **self.get_state(),
-                "waiting_for_user_discard": True
-            }
+            self.user_claim_prompt = None
+            return self.get_state()
 
         if action == "CHOW":
             if not meld:
@@ -719,10 +702,8 @@ class TableMatchGame:
             self.current_turn_index = user_idx
             self.last_discard = None
             self.user_passed_last_discard = False
-            return {
-                **self.get_state(),
-                "waiting_for_user_discard": True
-            }
+            self.user_claim_prompt = None
+            return self.get_state()
 
         return self.get_state()
 
@@ -730,63 +711,69 @@ class TableMatchGame:
         """Calculates TVB 2026 Appendix 1 payout and updates scores."""
         self.game_over = True
         winner_name = self.player_names[winner_idx]
-        winner_seat = self.seat_winds[winner_idx]
 
-        full_hand_tiles = list(self.hands[winner_idx])
+        # Calculate Fan & breakdown
+        full_hand = list(self.hands[winner_idx])
         for m in self.melds[winner_idx]:
-            full_hand_tiles.extend(m["tiles"][:3])
-        if not is_self_draw and len(full_hand_tiles) == 13:
-            full_hand_tiles.append(winning_tile)
-        full_hand_tiles = sort_tiles(full_hand_tiles)
+            full_hand.extend(m["tiles"][:3])
+        if not is_self_draw and winning_tile:
+            full_hand.append(winning_tile)
 
-        fan_res = calculate_fan(
-            tiles=full_hand_tiles,
+        fan_result = calculate_fan(
+            tiles=sort_tiles(full_hand),
             winning_tile=winning_tile,
             is_self_draw=is_self_draw,
             prevailing_wind=self.prevailing_wind,
-            seat_wind=winner_seat,
+            seat_wind=self.seat_winds[winner_idx],
             open_melds=self.melds[winner_idx]
         )
 
-        total_fan = min(10, max(1, fan_res["total_fan"]))
+        total_fan = fan_result.get("total_fan", 1)
+        hand_name = fan_result.get("hand_name", "胡牌")
+
+        # Payout calculation
+        payout = get_point_payout_details(total_fan, is_self_draw)
         point_delta = [0, 0, 0, 0]
 
-        # TVB 2026 Appendix 1 Point Formula
-        # Normal Win: Winner gets +10 * fan, Shooter loses -10 * fan
-        # Self-Draw: Winner gets +15 * fan, Each opponent loses -5 * fan
         if is_self_draw:
-            win_pts = total_fan * 15
-            loss_pts = -(total_fan * 5)
+            # Self-draw: all 3 opponents pay each_opponent_loss
+            opp_loss = abs(payout.get("each_opponent_loss", 5 * total_fan))
+            win_gain = payout.get("winner_gain", 15 * total_fan)
             for i in range(4):
                 if i == winner_idx:
-                    point_delta[i] = win_pts
+                    point_delta[i] = win_gain
                 else:
-                    point_delta[i] = loss_pts
-            win_desc = f"🎉 {winner_name} 自摸 (Self-Draw) {fan_res['hand_name']} ({total_fan} 番 / Fan)!"
+                    point_delta[i] = -opp_loss
+            self.match_logs.append(f"🎉 {winner_name} declared Self-Draw Win (自摸) for {total_fan} 番 (+{win_gain} pts)!")
         else:
+            # Ron: shooter pays shooter_loss
+            shooter_loss = abs(payout.get("shooter_loss", 10 * total_fan))
+            win_gain = payout.get("winner_gain", 10 * total_fan)
+            for i in range(4):
+                if i == winner_idx:
+                    point_delta[i] = win_gain
+                elif i == shooter_idx:
+                    point_delta[i] = -shooter_loss
+                else:
+                    point_delta[i] = 0
             shooter_name = self.player_names[shooter_idx] if shooter_idx is not None else "Opponent"
-            win_pts = total_fan * 10
-            point_delta[winner_idx] = win_pts
-            if shooter_idx is not None:
-                point_delta[shooter_idx] = -win_pts
-            win_desc = f"🎯 {winner_name} 出銃胡牌 (Ron Win) off {shooter_name} with {fan_res['hand_name']} ({total_fan} 番 / Fan)!"
+            self.match_logs.append(f"💥 {winner_name} won on {shooter_name}'s discard for {total_fan} 番 (+{win_gain} pts)!")
 
+        # Apply score deltas
         for i in range(4):
             self.scores[i] += point_delta[i]
-
-        self.match_logs.append(win_desc)
 
         self.winner_info = {
             "winner_index": winner_idx,
             "winner_name": winner_name,
-            "shooter_index": shooter_idx,
             "is_self_draw": is_self_draw,
+            "winning_hand": sort_tiles(full_hand),
             "winning_tile": winning_tile,
             "fan": total_fan,
-            "hand_name": fan_res["hand_name"],
-            "breakdown": fan_res["breakdown"],
+            "hand_name": hand_name,
+            "breakdown": fan_result.get("breakdown", []),
             "point_delta": point_delta,
-            "winning_hand": self.hands[winner_idx]
+            "is_exhaust_draw": False
         }
 
         # Advance dealer on every hand (TVB 過莊規則)
@@ -849,6 +836,8 @@ class TableMatchGame:
                 pass
 
         displayed_hand_num = min(16, self.hand_number) if not self.match_over else 16
+        waiting_discard = (self.current_turn_index == 1 and len(self.hands[1]) % 3 == 2 and not self.game_over)
+        waiting_claim = (self.user_claim_prompt is not None and not self.game_over)
 
         return {
             "game_id": self.game_id,
@@ -864,6 +853,9 @@ class TableMatchGame:
             "last_discard": self.last_discard,
             "game_over": self.game_over,
             "winner_info": self.winner_info,
+            "waiting_for_user_discard": waiting_discard,
+            "waiting_for_user_claim": waiting_claim,
+            "user_claim_prompt": self.user_claim_prompt,
             "players": [
                 {
                     "name": self.player_names[i],

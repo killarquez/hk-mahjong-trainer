@@ -89,7 +89,7 @@ def test_next_turn_endpoint():
     data = res.json()
     assert "drawn_tile" in data
     assert len(data["hand_tiles"]) == 14
-    assert "4z" not in data["hand_tiles"] or data["hand_tiles"].count("4z") < tiles.count("4z")
+    assert data["drawn_tile"] in data["hand_tiles"]
 
 
 def test_fan_counter_endpoint():
