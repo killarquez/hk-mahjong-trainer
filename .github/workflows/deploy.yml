@@ -1,0 +1,43 @@
+name: Test and Auto-Deploy to Oracle VM
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 🧪 Run Automated Pytest Suite
+        run: |
+          pip install -r requirements.txt
+          python -m pytest tests/ -q
+
+      - name: 🚀 Deploy to Oracle Cloud VM via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            echo "📥 Pulling latest code..."
+            cd /var/www/hk-mahjong-trainer
+            git fetch origin main
+            git reset --hard origin/main
+            echo "🐍 Updating dependencies..."
+            ./venv/bin/pip install -r requirements.txt
+            echo "🔄 Restarting mahjong systemd service..."
+            sudo systemctl restart mahjong
+            echo "✅ Health check verification:"
+            curl -s http://127.0.0.1:8000/api/health
+            echo ""
+            echo "🎉 Site successfully deployed to https://mahjong.au-tomato.com!"
