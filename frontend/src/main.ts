@@ -2338,7 +2338,171 @@ class MahjongApp {
   private defenseCorrectCount: number = 0;
   private defenseTotalCount: number = 0;
 
+  public defenseLanguage: string = 'en';
+
+  public setDefenseLanguage(lang: string) {
+    this.defenseLanguage = lang;
+    const btnEn = document.getElementById('btn-defense-lang-en');
+    const btnZh = document.getElementById('btn-defense-lang-zh');
+    if (btnEn && btnZh) {
+      if (lang === 'en') {
+        btnEn.className = 'btn btn-primary';
+        btnZh.className = 'btn btn-secondary';
+      } else {
+        btnZh.className = 'btn btn-primary';
+        btnEn.className = 'btn btn-secondary';
+      }
+    }
+
+    const isZh = (lang === 'zh');
+    const titleEl = document.getElementById('defense-section-title');
+    if (titleEl) titleEl.textContent = isZh ? "🛡️ Hong Kong Mahjong 防守與攻守判斷特訓中心" : "🛡️ Hong Kong Mahjong Defense & Push/Fold Center";
+    const descEl = document.getElementById('defense-section-desc');
+    if (descEl) descEl.textContent = isZh ?
+      "精通香港麻雀全銃制防大牌必備神技：跟打熟牌 (Genbutsu)、筋牌法則 (Suji 1-4-7/2-5-8/3-6-9)、壁牌斷門 (Kabe)、死扣生張字牌與同門牌，以及 TVB 大賽攻守轉折點 (Push/Fold) 決策。" :
+      "Master the supreme art of defense in Hong Kong Mahjong: Genbutsu (跟打熟牌), Suji Theory (筋牌法則 1-4-7/2-5-8/3-6-9), Kabe (壁牌/斷門), Withholding dangerous live honors, and TVB Push/Fold (攻守轉折點) decision-making.";
+
+    const btnModeDrills = document.getElementById('btn-defense-mode-drills');
+    if (btnModeDrills) btnModeDrills.textContent = isZh ? "🎯 防守實戰測驗 (Defense Drills)" : "🎯 Defense Scenario Drills";
+    const btnModeTheory = document.getElementById('btn-defense-mode-theory');
+    if (btnModeTheory) btnModeTheory.textContent = isZh ? "📚 防守理論大師庫 (Theory Masterclass)" : "📚 Defensive Theory Masterclass";
+
+    const scenLabel = document.getElementById('defense-scenario-label');
+    if (scenLabel) scenLabel.textContent = isZh ? "情境類型 (Scenario):" : "Scenario Type:";
+    const btnBetaori = document.getElementById('btn-defense-scenario-betaori');
+    if (btnBetaori) btnBetaori.textContent = isZh ? "🛡️ 完全棄和找熟牌 (Betaori)" : "🛡️ Full Betaori Safe Discard";
+    const btnPushFold = document.getElementById('btn-defense-scenario-pushfold');
+    if (btnPushFold) btnPushFold.textContent = isZh ? "⚖️ 攻守轉折點抉擇 (Push vs Fold)" : "⚖️ Push vs Fold Decision";
+
+    const oppHeader = document.getElementById('defense-opp-header');
+    if (oppHeader) oppHeader.textContent = isZh ? "對手副露與牌河 (Opponent Melds & Discards):" : "Opponent's Exposed Melds & Table Discards:";
+    const meldsLabel = document.getElementById('defense-melds-label');
+    if (meldsLabel) meldsLabel.textContent = isZh ? "副露:" : "Melds:";
+    const riverLabel = document.getElementById('defense-river-label');
+    if (riverLabel) riverLabel.textContent = isZh ? "牌河:" : "River:";
+
+    const btnNextP = document.getElementById('btn-defense-next-puzzle');
+    if (btnNextP) btnNextP.textContent = isZh ? "🔄 換一題 (Next)" : "🔄 Next Scenario";
+    const btnSubmit = document.getElementById('btn-defense-submit');
+    if (btnSubmit) btnSubmit.textContent = isZh ? "🎯 驗證防守決策 (Confirm Decision)" : "🎯 Confirm Defensive Decision";
+    const btnNextAfter = document.getElementById('btn-defense-next-after-result');
+    if (btnNextAfter) btnNextAfter.textContent = isZh ? "進入下一情境 ➡️" : "Next Scenario ➡️";
+    const heatHeader = document.getElementById('defense-heatmap-header');
+    if (heatHeader) heatHeader.textContent = isZh ? "📊 手中牌張危險度天梯表 (由安全到最危險):" : "📊 Hand Tile Danger Ranking Heatmap (Safest → Most Dangerous):";
+
+    const btnPfPush = document.getElementById('btn-pf-push');
+    if (btnPfPush) btnPfPush.textContent = isZh ? "⚔️ PUSH (進攻 / 押牌)" : "⚔️ PUSH (Attack / Tenpai)";
+    const btnPfMawashi = document.getElementById('btn-pf-mawashi');
+    if (btnPfMawashi) btnPfMawashi.textContent = isZh ? "⚖️ MAWASHI (兜牌 / 兼顧牌效)" : "⚖️ MAWASHI (Defensive Weaving)";
+    const btnPfFold = document.getElementById('btn-pf-fold');
+    if (btnPfFold) btnPfFold.textContent = isZh ? "🛡️ FOLD (完全棄和 / Betaori)" : "🛡️ FOLD (Full Betaori)";
+
+    this.renderDefenseTheory();
+
+    if (this.currentDefensePuzzle) {
+      this.renderDefenseScenario(this.currentDefensePuzzle);
+    }
+  }
+
+  public renderDefenseTheory() {
+    const container = document.getElementById('defense-theory-container');
+    if (!container) return;
+    const isZh = (this.defenseLanguage === 'zh');
+
+    const cards = isZh ? [
+      {
+        icon: "🀄",
+        title: "1. 跟打熟牌與現物 (Genbutsu)",
+        content: `<strong>現物（跟打熟牌）：</strong>對手牌河中已經打過的牌，向其出銃率為 0%。<br/>
+<strong>三見/四見字牌：</strong>牌桌上已見 3 張或 4 張的字牌（東南西北中發白），絕不可能成刻或成對，防守安全性高達 95%~100%！<br/>
+<strong>生張字牌（極度危險）：</strong>若對手已亮混一色或兩副露，絕不可輕出 0 見的生張中發白或門風！`
+      },
+      {
+        icon: "📏",
+        title: "2. 筋牌防守法則 (Suji 1-4-7 / 2-5-8 / 3-6-9)",
+        content: `<strong>表筋（外筋）：</strong>若對手打過 4，則 1 與 7 不會被 23 或 56 的兩面順子聽牌！<br/>
+• 打過 4 萬 $\\implies$ 1 萬、7 萬相對安全。<br/>
+• 打過 5 筒 $\\implies$ 2 筒、8 筒相對安全。<br/>
+• 打過 6 索 $\\implies$ 3 索、9 索相對安全。<br/>
+<strong>雙筋：</strong>若 1 與 7 皆已打出，中張 4 為雙筋，安全性大幅提升。`
+      },
+      {
+        icon: "🧱",
+        title: "3. 壁牌與斷門理論 (Kabe / No-Chance)",
+        content: `<strong>No-Chance（斷牌）：</strong>若某張牌在牌桌上已見 4 張（如四張 7 筒全現），則對手不可能持有 78 聽 69 或 67 聽 58！<br/>
+• 斷 7 筒 $\\implies$ 8 筒、9 筒為無筋安全牌。<br/>
+• 斷 3 萬 $\\implies$ 1 萬、2 萬極度安全。<br/>
+<strong>One-Chance：</strong>已見 3 張，危險度減半。`
+      },
+      {
+        icon: "⚖️",
+        title: "4. TVB 全銃制攻守轉折點 (Push / Fold)",
+        content: `<strong>全銃制原則：</strong>TVB 大賽放銃者需全額承擔失分（$-10\\times\\text{番數}$）。<br/>
+• <strong>進攻（Push）：</strong>手牌已聽牌（0向聽）且有 3+ 番價值。<br/>
+• <strong>兜牌（Mawashi）：</strong>一向聽大牌，只出安全牌或筋牌保留進張。<br/>
+• <strong>完全棄和（Betaori）：</strong>二向聽以上，對手已開兩副露或大牌，100% 跟打熟牌！`
+      }
+    ] : [
+      {
+        icon: "🀄",
+        title: "1. Genbutsu & Dead Honor Discards",
+        content: `<strong>Genbutsu (跟打現物):</strong> Any tile already discarded by the threatening opponent has a strict 0% chance of dealing into them (Ron).<br/>
+<strong>3-Dead / 4-Dead Honors (三見/四見字牌):</strong> Honor tiles (Winds & Dragons) with 3 or 4 copies visible on table cannot form triplets or pairs — 95%~100% safe!<br/>
+<strong>Live Honors (生張字牌 - Extreme Danger):</strong> If opponent shows Half-Flush or 2+ melds, NEVER discard 0-visible Dragons or Seat Winds!`
+      },
+      {
+        icon: "📏",
+        title: "2. Suji Defensive Theory (1-4-7 / 2-5-8 / 3-6-9)",
+        content: `<strong>Outer Suji (表筋):</strong> If an opponent discarded 4, then 1 and 7 cannot be won on via 2-3 or 5-6 two-sided sequence waits!<br/>
+• Opponent discarded 4-Character $\\implies$ 1-Character & 7-Character are relatively safe.<br/>
+• Opponent discarded 5-Dot $\\implies$ 2-Dot & 8-Dot are relatively safe.<br/>
+• Opponent discarded 6-Bamboo $\\implies$ 3-Bamboo & 9-Bamboo are relatively safe.<br/>
+<strong>Double Suji (雙筋):</strong> If both 1 and 7 have been discarded, the middle 4 becomes Double Suji (much safer than unsuited tiles).`
+      },
+      {
+        icon: "🧱",
+        title: "3. Kabe & Wall Reading (No-Chance / One-Chance)",
+        content: `<strong>No-Chance (壁牌 / 斷門):</strong> If all 4 copies of a tile are visible on the table (e.g. all four 7-Dots are seen), the opponent CANNOT hold 7-8 waiting on 6-9, or 6-7 waiting on 5-8!<br/>
+• 4x 7-Dots visible $\\implies$ 8-Dot and 9-Dot are safe from two-sided waits.<br/>
+• 4x 3-Characters visible $\\implies$ 1-Character and 2-Character are extremely safe.<br/>
+<strong>One-Chance:</strong> 3 copies visible cut terminal wait probabilities in half.`
+      },
+      {
+        icon: "⚖️",
+        title: "4. TVB Full Gun-Loss Push/Fold Matrix",
+        content: `<strong>Full Gun-Loss Rule (全銃制):</strong> In TVB HK rules, the discarder pays the ENTIRE loss alone ($-10 \\times \\text{Fan}$).<br/>
+• <strong>PUSH (進攻):</strong> Hand is in Tenpai (0-Shanten) with 3+ Fan value.<br/>
+• <strong>MAWASHI (兜牌):</strong> 1-Shanten high-value hand — only discard safe Suji/Genbutsu while preserving winning draws.<br/>
+• <strong>FOLD (Betaori / 完全棄和):</strong> 2-Shanten or worse against 2+ exposed melds or dealer threat — 100% discard safe tiles!`
+      }
+    ];
+
+    const colors = ['var(--accent-emerald)', 'var(--c-blue-diamond)', 'var(--accent-gold)', 'var(--c-ruby-ring)'];
+
+    container.innerHTML = cards.map((card, idx) => `
+      <div class="rules-card">
+        <h3 style="color:${colors[idx % colors.length]}; display:flex; align-items:center; gap:8px;">
+          <span>${card.icon}</span> ${card.title}
+        </h3>
+        <p style="font-size:0.88rem; color:#cbd5e1; line-height:1.6; margin-top:8px;">
+          ${card.content}
+        </p>
+      </div>
+    `).join('');
+  }
+
   public initDefenseCenter() {
+    const btnLangEn = document.getElementById('btn-defense-lang-en');
+    const btnLangZh = document.getElementById('btn-defense-lang-zh');
+    btnLangEn?.addEventListener('click', () => {
+      sound.playTileClick();
+      this.setDefenseLanguage('en');
+    });
+    btnLangZh?.addEventListener('click', () => {
+      sound.playTileClick();
+      this.setDefenseLanguage('zh');
+    });
+
     const btnModeDrills = document.getElementById('btn-defense-mode-drills');
     const btnModeTheory = document.getElementById('btn-defense-mode-theory');
     const paneDrills = document.getElementById('defense-pane-drills');
@@ -2398,6 +2562,7 @@ class MahjongApp {
       this.loadNewDefensePuzzle();
     });
 
+    this.setDefenseLanguage(this.defenseLanguage || 'en');
     this.loadNewDefensePuzzle();
   }
 
@@ -2416,7 +2581,7 @@ class MahjongApp {
 
   public renderDefenseScenario(puzzle: any) {
     if (!puzzle) return;
-    const isZh = getLanguage() === 'zh';
+    const isZh = (this.defenseLanguage === 'zh');
 
     // Hide Feedback Card
     const fbCard = document.getElementById('defense-feedback-card');
@@ -2432,12 +2597,13 @@ class MahjongApp {
 
     const suspectedBadge = document.getElementById('defense-suspected-fan-badge');
     if (suspectedBadge) {
-      suspectedBadge.textContent = isZh ? `估算番數: ${threatInfo.estimated_fan || 1}+ 番` : `Estimated Value: ${threatInfo.estimated_fan || 1}+ Fan`;
+      suspectedBadge.textContent = isZh ? `大牌預警: ${threatInfo.estimated_fan || 1}+ 番` : `Estimated Value: ${threatInfo.estimated_fan || 1}+ Fan`;
     }
 
     const targetBadge = document.getElementById('defense-target-player-badge');
     if (targetBadge) {
-      targetBadge.textContent = isZh ? `威脅目標: ${threatInfo.player_name || '對手'}` : `Threat Target: ${threatInfo.player_name || 'Opponent'}`;
+      const pName = isZh ? (threatInfo.player_name_zh || threatInfo.player_name) : (threatInfo.player_name_en || threatInfo.player_name || 'Opponent');
+      targetBadge.textContent = isZh ? `威脅目標: ${pName}` : `Threat Target: ${pName}`;
     }
 
     // 2. Opponent Melds & River
@@ -2482,7 +2648,7 @@ class MahjongApp {
       if (handPrompt) {
         handPrompt.textContent = isZh ? 
           '你的手牌 — 評估手牌價值與對手威脅，選擇攻守方針 (Push/Fold):' : 
-          'Your Hand — Evaluate value vs opponent threat and select tactical posture (Push/Fold):';
+          'Your Hand — Evaluate value vs opponent threat and choose tactical move (Push/Fold):';
       }
       document.querySelectorAll('.btn-pf-choice').forEach(b => b.classList.remove('active'));
     } else {
@@ -2520,7 +2686,7 @@ class MahjongApp {
     if (!this.currentDefensePuzzle) return;
     const isPushFold = (this.currentDefensePuzzle.scenario_type === 'push_fold');
     const userChoice = isPushFold ? this.selectedPushFoldChoice : this.selectedDefenseTile;
-    const isZh = getLanguage() === 'zh';
+    const isZh = (this.defenseLanguage === 'zh');
 
     if (!userChoice) {
       alert(isPushFold ? 
@@ -2592,7 +2758,7 @@ class MahjongApp {
         }
 
         expBox.innerHTML = `
-          <div style="font-size:0.95rem; margin-bottom:6px;">${isZh ? data.explanation_zh : (data.explanation_en || data.explanation_zh)}</div>
+          <div style="font-size:0.95rem; margin-bottom:6px; color:#fff;">${isZh ? data.explanation_zh : (data.explanation_en || data.explanation_zh)}</div>
           <div style="font-size:0.85rem; color:#9ca3af;">${isZh ? data.explanation_en : data.explanation_zh}</div>
         `;
 
@@ -2611,7 +2777,7 @@ class MahjongApp {
               </div>
               <div style="text-align:right;">
                 <span class="badge" style="background:${r.color}; color:#111; font-weight:800; font-size:0.8rem;">
-                  Danger: ${r.danger_score}/10
+                  ${isZh ? '危險值' : 'Danger'}: ${r.danger_score}/10
                 </span>
               </div>
             </div>
@@ -2620,9 +2786,8 @@ class MahjongApp {
           heatmapContainer.style.display = 'none';
         }
 
-      fbCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
+        fbCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     } catch (err: any) {
       alert(`Submission error: ${err.message}`);
     }

@@ -596,12 +596,15 @@ def generate_defense_drill_puzzle(scenario_type: str = "betaori") -> Dict[str, A
             "title_en": "Full Betaori: Identify the Safest Discard",
             "threat_info": {
                 "player_name": target_name,
+                "player_name_zh": "陳大師 (東家)",
+                "player_name_en": "Master Chan (East Dealer)",
                 "seat_wind": target_seat,
                 "melds": opp_melds,
                 "river": opp_river,
                 "threat_level": "CRITICAL",
                 "estimated_fan": 4,
-                "threat_summary_zh": "東家莊家已開兩副露（紅中刻 + 順子），估計起碼 4 番起跳！你手牌處於二向聽，請找出【最安全的防守捨牌】。"
+                "threat_summary_zh": "東家莊家已開兩副露（紅中刻 + 順子），估計起碼 4 番起跳！你手牌處於二向聽，請找出【最安全的防守捨牌】。",
+                "threat_summary_en": "East Dealer has revealed 2 melds (Red Dragon Pong + Chow), threatening at least 4+ Fan! Your hand is in 2-Shanten. Pick the safest defensive discard from your hand."
             },
             "user_hand": hand,
             "ground_truth": {
@@ -610,7 +613,7 @@ def generate_defense_drill_puzzle(scenario_type: str = "betaori") -> Dict[str, A
                 "best_discard": safest_tiles[0],
                 "tile_ratings": tile_ratings,
                 "explanation_zh": f"最優解為打出 100% 現物【{TILE_INFO_MAP[safest_tiles[0]]['chinese']} ({safest_tiles[0]})】或三見字牌【{dead_honor}】。對手已露兩副大牌且自己向聽數過遠，不可打出任何無筋生張！",
-                "explanation_en": f"Optimal discard is 100% Genbutsu {safest_tiles[0]} or 3-dead Honor {dead_honor}."
+                "explanation_en": f"Optimal discard is 100% Genbutsu {safest_tiles[0]} or 3-dead Honor {dead_honor}. Facing an exposed 4+ Fan threat while far from Tenpai, you must never throw live unsuited tiles."
             }
         }
 
@@ -642,12 +645,15 @@ def generate_defense_drill_puzzle(scenario_type: str = "betaori") -> Dict[str, A
             "title_en": "Push vs Fold Tactical Decision Drill",
             "threat_info": {
                 "player_name": target_name,
+                "player_name_zh": "陳大師 (東家)",
+                "player_name_en": "Master Chan (East Dealer)",
                 "seat_wind": target_seat,
                 "melds": opp_melds,
                 "river": opp_river,
                 "threat_level": "MEDIUM",
                 "estimated_fan": 2,
-                "threat_summary_zh": "對手開出一副露發財刻（估計 1-2 番），巡目尚早。你的手牌已有清一色/混一色高番雛形（一向聽），此時應選擇【進攻】、【兜牌】還是【全面棄和】？"
+                "threat_summary_zh": "對手開出一副露發財刻（估計 1-2 番），巡目尚早。你的手牌已有清一色/混一色高番雛形（一向聽），此時應選擇【進攻】、【兜牌】還是【全面棄和】？",
+                "threat_summary_en": "Opponent exposed 1 Green Dragon Pong (1-2 Fan estimated) in early rounds. Your hand has high-value Pure/Half Flush potential in 1-Shanten. What is your optimal tactical move: PUSH, MAWASHI, or FOLD?"
             },
             "user_hand": hand,
             "ground_truth": {

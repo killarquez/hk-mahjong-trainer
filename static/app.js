@@ -429,12 +429,13 @@
         defenseBestStreak = data.defenseBestStreak || 0;
         defenseCorrectCount = data.defenseCorrectCount || 0;
         defenseTotalCount = data.defenseTotalCount || 0;
+        defenseLanguage = data.defenseLanguage || 'en';
       } catch (e) {}
     },
     saveDefenseStats() {
       try {
         localStorage.setItem('hkm_defense_stats', JSON.stringify({
-          defenseStreak, defenseBestStreak, defenseCorrectCount, defenseTotalCount
+          defenseStreak, defenseBestStreak, defenseCorrectCount, defenseTotalCount, defenseLanguage
         }));
       } catch (e) {}
     }
@@ -3258,6 +3259,8 @@
   // =========================================================================
   // Defense Center & Push/Fold Masterclass (Hong Kong Mahjong Ruleset)
   // =========================================================================
+  // Defense & Push/Fold Center Module (Bilingual Support EN/ZH)
+  // =========================================================================
   let currentDefensePuzzle = null;
   let selectedDefenseTile = null;
   let selectedPushFoldChoice = null;
@@ -3266,8 +3269,238 @@
   let defenseBestStreak = 0;
   let defenseCorrectCount = 0;
   let defenseTotalCount = 0;
+  let defenseLanguage = 'en';
+
+  const DEFENSE_I18N = {
+    en: {
+      title: "🛡️ Hong Kong Mahjong Defense & Push/Fold Center",
+      desc: "Master the supreme art of defense in Hong Kong Mahjong: Genbutsu (跟打熟牌), Suji Theory (筋牌法則 1-4-7/2-5-8/3-6-9), Kabe (壁牌/斷門), Withholding dangerous live honors, and TVB Push/Fold (攻守轉折點) decision-making.",
+      modeDrills: "🎯 Defense Scenario Drills",
+      modeTheory: "📚 Defensive Theory Masterclass",
+      scenarioLabel: "Scenario Type:",
+      scenarioBetaori: "🛡️ Full Betaori Safe Discard",
+      scenarioPushFold: "⚖️ Push vs Fold Decision",
+      threatPrefix: "⚠️ Threat Level:",
+      estimatedFan: (f) => `Estimated Value: ${f}+ Fan`,
+      targetPlayer: (name) => `Target: ${name}`,
+      oppHeader: "Opponent's Exposed Melds & Table Discards:",
+      meldsLabel: "Melds:",
+      riverLabel: "River:",
+      noMelds: "(Concealed Hand / 0 Melds)",
+      nextScenario: "🔄 Next Scenario",
+      handPromptBetaori: "Your 14-Tile Hand — Click on your safest defensive discard:",
+      handPromptPushFold: "Your Hand — Evaluate value vs opponent threat and choose tactical move:",
+      btnPush: "⚔️ PUSH (Attack / Tenpai)",
+      btnMawashi: "⚖️ MAWASHI (Defensive Weaving)",
+      btnFold: "🛡️ FOLD (Full Betaori)",
+      btnSubmit: "🎯 Confirm Defensive Decision",
+      nextAfterResult: "Next Scenario ➡️",
+      heatmapHeader: "📊 Hand Tile Danger Ranking Heatmap (Safest → Most Dangerous):",
+      dangerScore: (s) => `Danger: ${s}/10`,
+      correctTitle: "🎉 Correct Decision!",
+      dangerTitle: "❌ Dangerous Decision (Deal-In Risk)!",
+      optimalStrategy: (opt) => `Optimal Defensive Play: ${opt}`,
+      userVsOptimal: (u, opt) => `Your Choice: ${u} • Optimal Play: ${opt}`,
+      selectTileAlert: "Please click on a tile in your hand to discard.",
+      selectPostureAlert: "Please select a tactical posture (PUSH, MAWASHI, or FOLD).",
+      theoryCards: [
+        {
+          icon: "🀄",
+          title: "1. Genbutsu & Dead Honor Discards",
+          content: `<strong>Genbutsu (跟打現物):</strong> Any tile already discarded by the threatening opponent has a strict 0% chance of dealing into them (Ron).<br/>
+<strong>3-Dead / 4-Dead Honors (三見/四見字牌):</strong> Honor tiles (Winds & Dragons) with 3 or 4 copies visible on table cannot form triplets or pairs — 95%~100% safe!<br/>
+<strong>Live Honors (生張字牌 - Extreme Danger):</strong> If opponent shows Half-Flush or 2+ melds, NEVER discard 0-visible Dragons or Seat Winds!`
+        },
+        {
+          icon: "📏",
+          title: "2. Suji Defensive Theory (1-4-7 / 2-5-8 / 3-6-9)",
+          content: `<strong>Outer Suji (表筋):</strong> If an opponent discarded 4, then 1 and 7 cannot be won on via 2-3 or 5-6 two-sided sequence waits!<br/>
+• Opponent discarded 4-Character $\\implies$ 1-Character & 7-Character are relatively safe.<br/>
+• Opponent discarded 5-Dot $\\implies$ 2-Dot & 8-Dot are relatively safe.<br/>
+• Opponent discarded 6-Bamboo $\\implies$ 3-Bamboo & 9-Bamboo are relatively safe.<br/>
+<strong>Double Suji (雙筋):</strong> If both 1 and 7 have been discarded, the middle 4 becomes Double Suji (much safer than unsuited tiles).`
+        },
+        {
+          icon: "🧱",
+          title: "3. Kabe & Wall Reading (No-Chance / One-Chance)",
+          content: `<strong>No-Chance (壁牌 / 斷門):</strong> If all 4 copies of a tile are visible on the table (e.g. all four 7-Dots are seen), the opponent CANNOT hold 7-8 waiting on 6-9, or 6-7 waiting on 5-8!<br/>
+• 4x 7-Dots visible $\\implies$ 8-Dot and 9-Dot are safe from two-sided waits.<br/>
+• 4x 3-Characters visible $\\implies$ 1-Character and 2-Character are extremely safe.<br/>
+<strong>One-Chance:</strong> 3 copies visible cut terminal wait probabilities in half.`
+        },
+        {
+          icon: "⚖️",
+          title: "4. TVB Full Gun-Loss Push/Fold Matrix",
+          content: `<strong>Full Gun-Loss Rule (全銃制):</strong> In TVB HK rules, the discarder pays the ENTIRE loss alone ($-10 \\times \\text{Fan}$).<br/>
+• <strong>PUSH (進攻):</strong> Hand is in Tenpai (0-Shanten) with 3+ Fan value.<br/>
+• <strong>MAWASHI (兜牌):</strong> 1-Shanten high-value hand — only discard safe Suji/Genbutsu while preserving winning draws.<br/>
+• <strong>FOLD (Betaori / 完全棄和):</strong> 2-Shanten or worse against 2+ exposed melds or dealer threat — 100% discard safe tiles!`
+        }
+      ]
+    },
+    zh: {
+      title: "🛡️ Hong Kong Mahjong 防守與攻守判斷特訓中心",
+      desc: "精通香港麻雀全銃制防大牌必備神技：跟打熟牌 (Genbutsu)、筋牌法則 (Suji 1-4-7/2-5-8/3-6-9)、壁牌斷門 (Kabe)、死扣生張字牌與同門牌，以及 TVB 大賽攻守轉折點 (Push/Fold) 決策。",
+      modeDrills: "🎯 防守實戰測驗 (Defense Drills)",
+      modeTheory: "📚 防守理論大師庫 (Theory Masterclass)",
+      scenarioLabel: "情境類型 (Scenario):",
+      scenarioBetaori: "🛡️ 完全棄和找熟牌 (Betaori)",
+      scenarioPushFold: "⚖️ 攻守轉折點抉擇 (Push vs Fold)",
+      threatPrefix: "⚠️ 威脅等級:",
+      estimatedFan: (f) => `大牌預警: ${f}+ 番`,
+      targetPlayer: (name) => `威脅目標: ${name}`,
+      oppHeader: "對手副露與牌河 (Opponent Melds & Discards):",
+      meldsLabel: "副露:",
+      riverLabel: "牌河:",
+      noMelds: "(門清 Concealed / 無副露)",
+      nextScenario: "🔄 換一題 (Next)",
+      handPromptBetaori: "你的 14 張手牌 — 點選你手中最安全的防守捨牌:",
+      handPromptPushFold: "手牌 — 評估手牌價值與對手威脅，選擇攻守方針:",
+      btnPush: "⚔️ PUSH (進攻 / 押牌)",
+      btnMawashi: "⚖️ MAWASHI (兜牌 / 兼顧牌效)",
+      btnFold: "🛡️ FOLD (完全棄和 / Betaori)",
+      btnSubmit: "🎯 驗證防守決策 (Confirm Decision)",
+      nextAfterResult: "進入下一情境 ➡️",
+      heatmapHeader: "📊 手中牌張危險度天梯表 (由安全到最危險):",
+      dangerScore: (s) => `危險值: ${s}/10`,
+      correctTitle: "🎉 防守成功！(Correct Decision!)",
+      dangerTitle: "❌ 出銃高危警報！(Dangerous Decision)",
+      optimalStrategy: (opt) => `最優防守策略: ${opt}`,
+      userVsOptimal: (u, opt) => `你的選擇: ${u} • 最優解: ${opt}`,
+      selectTileAlert: "請先點選一張防守捨牌。",
+      selectPostureAlert: "請選擇攻守方針 (PUSH、MAWASHI 或 FOLD)。",
+      theoryCards: [
+        {
+          icon: "🀄",
+          title: "1. 跟打熟牌與現物 (Genbutsu)",
+          content: `<strong>現物（跟打熟牌）：</strong>對手牌河中已經打過的牌，向其出銃率為 0%。<br/>
+<strong>三見/四見字牌：</strong>牌桌上已見 3 張或 4 張的字牌（東南西北中發白），絕不可能成刻或成對，防守安全性高達 95%~100%！<br/>
+<strong>生張字牌（極度危險）：</strong>若對手已亮混一色或兩副露，絕不可輕出 0 見的生張中發白或門風！`
+        },
+        {
+          icon: "📏",
+          title: "2. 筋牌防守法則 (Suji 1-4-7 / 2-5-8 / 3-6-9)",
+          content: `<strong>表筋（外筋）：</strong>若對手打過 4，則 1 與 7 不會被 23 或 56 的兩面順子聽牌！<br/>
+• 打過 4 萬 $\\implies$ 1 萬、7 萬相對安全。<br/>
+• 打過 5 筒 $\\implies$ 2 筒、8 筒相對安全。<br/>
+• 打過 6 索 $\\implies$ 3 索、9 索相對安全。<br/>
+<strong>雙筋：</strong>若 1 與 7 皆已打出，中張 4 為雙筋，安全性大幅提升。`
+        },
+        {
+          icon: "🧱",
+          title: "3. 壁牌與斷門理論 (Kabe / No-Chance)",
+          content: `<strong>No-Chance（斷牌）：</strong>若某張牌在牌桌上已見 4 張（如四張 7 筒全現），則對手不可能持有 78 聽 69 或 67 聽 58！<br/>
+• 斷 7 筒 $\\implies$ 8 筒、9 筒為無筋安全牌。<br/>
+• 斷 3 萬 $\\implies$ 1 萬、2 萬極度安全。<br/>
+<strong>One-Chance：</strong>已見 3 張，危險度減半。`
+        },
+        {
+          icon: "⚖️",
+          title: "4. TVB 全銃制攻守轉折點 (Push / Fold)",
+          content: `<strong>全銃制原則：</strong>TVB 大賽放銃者需全額承擔失分（$-10\\times\\text{番數}$）。<br/>
+• <strong>進攻（Push）：</strong>手牌已聽牌（0向聽）且有 3+ 番價值。<br/>
+• <strong>兜牌（Mawashi）：</strong>一向聽大牌，只出安全牌或筋牌保留進張。<br/>
+• <strong>完全棄和（Betaori）：</strong>二向聽以上，對手已開兩副露或大牌，100% 跟打熟牌！`
+        }
+      ]
+    }
+  };
+
+  function setDefenseLanguage(lang) {
+    defenseLanguage = lang;
+    const btnEn = document.getElementById('btn-defense-lang-en');
+    const btnZh = document.getElementById('btn-defense-lang-zh');
+    if (btnEn && btnZh) {
+      if (lang === 'en') {
+        btnEn.className = 'btn btn-primary';
+        btnZh.className = 'btn btn-secondary';
+      } else {
+        btnZh.className = 'btn btn-primary';
+        btnEn.className = 'btn btn-secondary';
+      }
+    }
+
+    const t = DEFENSE_I18N[lang] || DEFENSE_I18N.en;
+
+    const titleEl = document.getElementById('defense-section-title');
+    if (titleEl) titleEl.textContent = t.title;
+    const descEl = document.getElementById('defense-section-desc');
+    if (descEl) descEl.textContent = t.desc;
+
+    const btnModeDrills = document.getElementById('btn-defense-mode-drills');
+    if (btnModeDrills) btnModeDrills.textContent = t.modeDrills;
+    const btnModeTheory = document.getElementById('btn-defense-mode-theory');
+    if (btnModeTheory) btnModeTheory.textContent = t.modeTheory;
+
+    const scenLabel = document.getElementById('defense-scenario-label');
+    if (scenLabel) scenLabel.textContent = t.scenarioLabel;
+    const btnBetaori = document.getElementById('btn-defense-scenario-betaori');
+    if (btnBetaori) btnBetaori.textContent = t.scenarioBetaori;
+    const btnPushFold = document.getElementById('btn-defense-scenario-pushfold');
+    if (btnPushFold) btnPushFold.textContent = t.scenarioPushFold;
+
+    const oppHeader = document.getElementById('defense-opp-header');
+    if (oppHeader) oppHeader.textContent = t.oppHeader;
+    const meldsLabel = document.getElementById('defense-melds-label');
+    if (meldsLabel) meldsLabel.textContent = t.meldsLabel;
+    const riverLabel = document.getElementById('defense-river-label');
+    if (riverLabel) riverLabel.textContent = t.riverLabel;
+
+    const btnNextP = document.getElementById('btn-defense-next-puzzle');
+    if (btnNextP) btnNextP.textContent = t.nextScenario;
+    const btnSubmit = document.getElementById('btn-defense-submit');
+    if (btnSubmit) btnSubmit.textContent = t.btnSubmit;
+    const btnNextAfter = document.getElementById('btn-defense-next-after-result');
+    if (btnNextAfter) btnNextAfter.textContent = t.nextAfterResult;
+    const heatHeader = document.getElementById('defense-heatmap-header');
+    if (heatHeader) heatHeader.textContent = t.heatmapHeader;
+
+    const btnPfPush = document.getElementById('btn-pf-push');
+    if (btnPfPush) btnPfPush.textContent = t.btnPush;
+    const btnPfMawashi = document.getElementById('btn-pf-mawashi');
+    if (btnPfMawashi) btnPfMawashi.textContent = t.btnMawashi;
+    const btnPfFold = document.getElementById('btn-pf-fold');
+    if (btnPfFold) btnPfFold.textContent = t.btnFold;
+
+    renderDefenseTheory();
+
+    if (currentDefensePuzzle) {
+      renderDefensePuzzle(currentDefensePuzzle);
+    }
+
+    StorageManager.saveDefenseStats();
+  }
+
+  function renderDefenseTheory() {
+    const container = document.getElementById('defense-theory-container');
+    if (!container) return;
+    const t = DEFENSE_I18N[defenseLanguage] || DEFENSE_I18N.en;
+    const colors = ['var(--accent-emerald)', 'var(--c-blue-diamond)', 'var(--accent-gold)', 'var(--c-ruby-ring)'];
+
+    container.innerHTML = t.theoryCards.map((card, idx) => `
+      <div class="rules-card">
+        <h3 style="color:${colors[idx % colors.length]}; display:flex; align-items:center; gap:8px;">
+          <span>${card.icon}</span> ${card.title}
+        </h3>
+        <p style="font-size:0.88rem; color:#cbd5e1; line-height:1.6; margin-top:8px;">
+          ${card.content}
+        </p>
+      </div>
+    `).join('');
+  }
 
   function initDefenseCenter() {
+    const btnLangEn = document.getElementById('btn-defense-lang-en');
+    const btnLangZh = document.getElementById('btn-defense-lang-zh');
+    btnLangEn?.addEventListener('click', () => {
+      sound.playTileClick();
+      setDefenseLanguage('en');
+    });
+    btnLangZh?.addEventListener('click', () => {
+      sound.playTileClick();
+      setDefenseLanguage('zh');
+    });
+
     const btnModeDrills = document.getElementById('btn-defense-mode-drills');
     const btnModeTheory = document.getElementById('btn-defense-mode-theory');
     const paneDrills = document.getElementById('defense-pane-drills');
@@ -3316,6 +3549,12 @@
       sound.playTileClick();
       loadNewDefensePuzzle();
     });
+
+    document.getElementById('btn-defense-next-after-result')?.addEventListener('click', () => {
+      sound.playTileClick();
+      loadNewDefensePuzzle();
+    });
+
     const streakEl = document.getElementById('defense-drill-streak');
     const bestEl = document.getElementById('defense-drill-best');
     const accEl = document.getElementById('defense-drill-acc');
@@ -3325,6 +3564,7 @@
     if (accEl) accEl.textContent = defenseTotalCount > 0 ? `${Math.round((defenseCorrectCount / defenseTotalCount) * 100)}%` : '0%';
     if (fracEl) fracEl.textContent = `${defenseCorrectCount}/${defenseTotalCount}`;
 
+    setDefenseLanguage(defenseLanguage || 'en');
     loadNewDefensePuzzle();
   }
 
@@ -3335,103 +3575,112 @@
       currentDefensePuzzle = puzzle;
       selectedDefenseTile = null;
       selectedPushFoldChoice = null;
-
-      const fbCard = document.getElementById('defense-feedback-card');
-      if (fbCard) fbCard.style.display = 'none';
-
-      const threatInfo = puzzle.threat_info || {};
-      const threatBadge = document.getElementById('defense-threat-badge');
-      if (threatBadge) {
-        threatBadge.textContent = `⚠️ Threat: ${threatInfo.threat_level}`;
-        threatBadge.style.background = threatInfo.threat_level === 'CRITICAL' ? '#dc2626' : (threatInfo.threat_level === 'HIGH' ? '#ea580c' : '#076cc0');
-      }
-
-      const suspectedBadge = document.getElementById('defense-suspected-fan-badge');
-      if (suspectedBadge) {
-        suspectedBadge.textContent = `估算番數: ${threatInfo.estimated_fan || 1}+ 番`;
-      }
-
-      const targetBadge = document.getElementById('defense-target-player-badge');
-      if (targetBadge) {
-        targetBadge.textContent = `Target: ${threatInfo.player_name || 'Opponent'}`;
-      }
-
-      const meldsRack = document.getElementById('defense-opp-melds-rack');
-      if (meldsRack) {
-        const melds = threatInfo.melds || [];
-        if (melds.length === 0) {
-          meldsRack.innerHTML = '<span style="color:#6b7280; font-size:0.8rem;">(門清 Concealed / 無副露)</span>';
-        } else {
-          meldsRack.innerHTML = melds.map((m) => `
-            <div style="display:flex; background:rgba(0,0,0,0.5); padding:2px 4px; border-radius:6px; gap:2px; border:1px solid rgba(255,255,255,0.1);">
-              ${m.tiles.map((t) => `
-                <img src="/static/tiles/${t}.png?v=4" alt="${t}" style="width:24px; height:32px; object-fit:contain;" />
-              `).join('')}
-            </div>
-          `).join('');
-        }
-      }
-
-      const riverRack = document.getElementById('defense-opp-river-rack');
-      if (riverRack) {
-        const river = threatInfo.river || [];
-        riverRack.innerHTML = river.map((r) => `
-          <div style="display:flex; flex-direction:column; align-items:center; background:#fff; border-radius:3px; padding:1px 2px;">
-            <img src="/static/tiles/${r.tile}.png?v=4" alt="${r.tile}" style="width:20px; height:26px; object-fit:contain;" />
-          </div>
-        `).join('');
-      }
-
-      const narrativeEl = document.getElementById('defense-threat-narrative');
-      if (narrativeEl) {
-        narrativeEl.textContent = threatInfo.threat_summary_zh || '';
-      }
-
-      const pfActions = document.getElementById('defense-push-fold-actions');
-      const handPrompt = document.getElementById('defense-hand-prompt');
-      const userHandRack = document.getElementById('defense-user-hand-rack');
-
-      if (puzzle.scenario_type === 'push_fold') {
-        if (pfActions) pfActions.style.display = 'flex';
-        if (handPrompt) handPrompt.textContent = 'Your Hand — Evaluate value vs threat and choose tactical posture (評估手牌價值與對手威脅，選擇攻守方針):';
-        document.querySelectorAll('.btn-pf-choice').forEach(b => b.classList.remove('active'));
-      } else {
-        if (pfActions) pfActions.style.display = 'none';
-        if (handPrompt) handPrompt.textContent = 'Your 14-Tile Hand — Click on your safest defensive discard (點選你手中最安全的防守捨牌):';
-      }
-
-      if (userHandRack) {
-        userHandRack.innerHTML = puzzle.user_hand.map((t, idx) => `
-          <div class="user-interactive-tile defense-selectable-tile" data-tile="${t}" data-idx="${idx}">
-            <img src="/static/tiles/${t}.png?v=4" alt="${t}" />
-            <span class="tile-name-label">${t}</span>
-          </div>
-        `).join('');
-
-        if (puzzle.scenario_type === 'betaori') {
-          userHandRack.querySelectorAll('.defense-selectable-tile').forEach(tileCard => {
-            tileCard.addEventListener('click', (e) => {
-              userHandRack.querySelectorAll('.defense-selectable-tile').forEach(c => c.classList.remove('selected-for-discard'));
-              e.currentTarget.classList.add('selected-for-discard');
-              selectedDefenseTile = e.currentTarget.getAttribute('data-tile');
-              sound.playTileClick();
-            });
-          });
-        }
-      }
-
+      renderDefensePuzzle(puzzle);
     } catch (err) {
       console.error('Failed to load defense puzzle:', err);
     }
   }
 
+  function renderDefensePuzzle(puzzle) {
+    if (!puzzle) return;
+    const t = DEFENSE_I18N[defenseLanguage] || DEFENSE_I18N.en;
+    const isZh = (defenseLanguage === 'zh');
+
+    const fbCard = document.getElementById('defense-feedback-card');
+    if (fbCard) fbCard.style.display = 'none';
+
+    const threatInfo = puzzle.threat_info || {};
+    const threatBadge = document.getElementById('defense-threat-badge');
+    if (threatBadge) {
+      threatBadge.textContent = `${t.threatPrefix} ${threatInfo.threat_level}`;
+      threatBadge.style.background = threatInfo.threat_level === 'CRITICAL' ? '#dc2626' : (threatInfo.threat_level === 'HIGH' ? '#ea580c' : '#076cc0');
+    }
+
+    const suspectedBadge = document.getElementById('defense-suspected-fan-badge');
+    if (suspectedBadge) {
+      suspectedBadge.textContent = t.estimatedFan(threatInfo.estimated_fan || 1);
+    }
+
+    const targetBadge = document.getElementById('defense-target-player-badge');
+    if (targetBadge) {
+      const pName = isZh ? (threatInfo.player_name_zh || threatInfo.player_name) : (threatInfo.player_name_en || threatInfo.player_name || 'Opponent');
+      targetBadge.textContent = t.targetPlayer(pName);
+    }
+
+    const meldsRack = document.getElementById('defense-opp-melds-rack');
+    if (meldsRack) {
+      const melds = threatInfo.melds || [];
+      if (melds.length === 0) {
+        meldsRack.innerHTML = `<span style="color:#6b7280; font-size:0.8rem;">${t.noMelds}</span>`;
+      } else {
+        meldsRack.innerHTML = melds.map((m) => `
+          <div style="display:flex; background:rgba(0,0,0,0.5); padding:2px 4px; border-radius:6px; gap:2px; border:1px solid rgba(255,255,255,0.1);">
+            ${m.tiles.map((tile) => `
+              <img src="/static/tiles/${tile}.png?v=4" alt="${tile}" style="width:24px; height:32px; object-fit:contain;" />
+            `).join('')}
+          </div>
+        `).join('');
+      }
+    }
+
+    const riverRack = document.getElementById('defense-opp-river-rack');
+    if (riverRack) {
+      const river = threatInfo.river || [];
+      riverRack.innerHTML = river.map((r) => `
+        <div style="display:flex; flex-direction:column; align-items:center; background:#fff; border-radius:3px; padding:1px 2px;">
+          <img src="/static/tiles/${r.tile}.png?v=4" alt="${r.tile}" style="width:20px; height:26px; object-fit:contain;" />
+        </div>
+      `).join('');
+    }
+
+    const narrativeEl = document.getElementById('defense-threat-narrative');
+    if (narrativeEl) {
+      narrativeEl.textContent = isZh ? (threatInfo.threat_summary_zh || '') : (threatInfo.threat_summary_en || threatInfo.threat_summary_zh || '');
+    }
+
+    const pfActions = document.getElementById('defense-push-fold-actions');
+    const handPrompt = document.getElementById('defense-hand-prompt');
+    const userHandRack = document.getElementById('defense-user-hand-rack');
+
+    if (puzzle.scenario_type === 'push_fold') {
+      if (pfActions) pfActions.style.display = 'flex';
+      if (handPrompt) handPrompt.textContent = t.handPromptPushFold;
+      document.querySelectorAll('.btn-pf-choice').forEach(b => b.classList.remove('active'));
+    } else {
+      if (pfActions) pfActions.style.display = 'none';
+      if (handPrompt) handPrompt.textContent = t.handPromptBetaori;
+    }
+
+    if (userHandRack) {
+      userHandRack.innerHTML = puzzle.user_hand.map((tile, idx) => `
+        <div class="user-interactive-tile defense-selectable-tile" data-tile="${tile}" data-idx="${idx}">
+          <img src="/static/tiles/${tile}.png?v=4" alt="${tile}" />
+          <span class="tile-name-label">${tile}</span>
+        </div>
+      `).join('');
+
+      if (puzzle.scenario_type === 'betaori') {
+        userHandRack.querySelectorAll('.defense-selectable-tile').forEach(tileCard => {
+          tileCard.addEventListener('click', (e) => {
+            userHandRack.querySelectorAll('.defense-selectable-tile').forEach(c => c.classList.remove('selected-for-discard'));
+            e.currentTarget.classList.add('selected-for-discard');
+            selectedDefenseTile = e.currentTarget.getAttribute('data-tile');
+            sound.playTileClick();
+          });
+        });
+      }
+    }
+  }
+
   async function submitDefenseDecision() {
     if (!currentDefensePuzzle) return;
+    const t = DEFENSE_I18N[defenseLanguage] || DEFENSE_I18N.en;
+    const isZh = (defenseLanguage === 'zh');
     const isPushFold = (currentDefensePuzzle.scenario_type === 'push_fold');
     const userChoice = isPushFold ? selectedPushFoldChoice : selectedDefenseTile;
 
     if (!userChoice) {
-      alert(isPushFold ? 'Please select a tactical posture (PUSH, MAWASHI, or FOLD).' : 'Please click on a tile in your hand to discard (請先點選一張防守捨牌).');
+      alert(isPushFold ? t.selectPostureAlert : t.selectTileAlert);
       return;
     }
 
@@ -3483,23 +3732,26 @@
 
         if (data.is_correct) {
           resHeader.innerHTML = `
-            <span style="color:#34d399;">🎉 防守成功！(Correct Decision!)</span>
+            <span style="color:#34d399;">${t.correctTitle}</span>
             <span class="badge" style="background:rgba(52,211,153,0.2); border:1px solid #34d399; color:#34d399; font-size:0.9rem;">
-              最優防守策略: ${data.optimal_choice}
+              ${t.optimalStrategy(data.optimal_choice)}
             </span>
           `;
         } else {
           resHeader.innerHTML = `
-            <span style="color:#f87171;">❌ 出銃高危警報！(Dangerous Decision)</span>
+            <span style="color:#f87171;">${t.dangerTitle}</span>
             <span class="badge" style="background:rgba(239,68,68,0.2); border:1px solid #ef4444; color:#fca5a5; font-size:0.9rem;">
-              你的選擇: ${data.user_choice} • 最優解: ${data.optimal_choice}
+              ${t.userVsOptimal(data.user_choice, data.optimal_choice)}
             </span>
           `;
         }
 
+        const primaryExp = isZh ? (data.explanation_zh || data.explanation_en) : (data.explanation_en || data.explanation_zh);
+        const secondaryExp = isZh ? data.explanation_en : data.explanation_zh;
+
         expBox.innerHTML = `
-          <div style="font-size:0.95rem; margin-bottom:6px;">${data.explanation_zh}</div>
-          <div style="font-size:0.85rem; color:#9ca3af;">${data.explanation_en}</div>
+          <div style="font-size:0.95rem; margin-bottom:6px; color:#fff;">${primaryExp}</div>
+          <div style="font-size:0.85rem; color:#9ca3af;">${secondaryExp}</div>
         `;
 
         if (data.tile_ratings && data.tile_ratings.length > 0 && heatmapTable && heatmapContainer) {
@@ -3511,13 +3763,13 @@
                 <img src="/static/tiles/${r.tile}.png?v=4" alt="${r.tile}" style="width:24px; height:32px; object-fit:contain;" />
                 <div>
                   <strong style="color:#fff;">${r.tile}</strong>
-                  <span style="color:${r.color}; font-weight:700; font-size:0.85rem; margin-left:6px;">[${r.safety_label_zh}]</span>
+                  <span style="color:${r.color}; font-weight:700; font-size:0.85rem; margin-left:6px;">[${isZh ? r.safety_label_zh : r.safety_label_en}]</span>
                   <div style="font-size:0.78rem; color:#cbd5e1; margin-top:2px;">${r.primary_reason}</div>
                 </div>
               </div>
               <div style="text-align:right;">
                 <span class="badge" style="background:${r.color}; color:#111; font-weight:800; font-size:0.8rem;">
-                  Danger: ${r.danger_score}/10
+                  ${t.dangerScore(r.danger_score)}
                 </span>
               </div>
             </div>

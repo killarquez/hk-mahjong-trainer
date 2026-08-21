@@ -820,18 +820,30 @@
       <!-- Header & Mode Switcher -->
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
         <div>
-          <div class="section-title" style="margin-bottom:4px;">🛡️ Hong Kong Mahjong Defense & Push/Fold Center (防守與攻守判斷特訓)</div>
-          <p style="color:var(--text-muted); font-size:0.85rem;">
-            Master the supreme art of defense in Hong Kong Mahjong (全銃制防大牌): Genbutsu (跟打熟牌), Suji Theory (筋牌法則 1-4-7/2-5-8/3-6-9), Kabe (壁牌/斷門), Withholding dangerous tiles (死扣生字與同門牌), and Push/Fold (攻守轉折點) decision-making.
+          <div class="section-title" id="defense-section-title" style="margin-bottom:4px;">🛡️ Hong Kong Mahjong Defense & Push/Fold Center</div>
+          <p id="defense-section-desc" style="color:var(--text-muted); font-size:0.85rem;">
+            Master the supreme art of defense in Hong Kong Mahjong: Genbutsu (跟打熟牌), Suji Theory (筋牌法則 1-4-7/2-5-8/3-6-9), Kabe (壁牌/斷門), Withholding dangerous tiles (死扣生字與同門牌), and Push/Fold (攻守轉折點) decision-making.
           </p>
         </div>
-        <div style="display:flex; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:3px; gap:4px;">
-          <button id="btn-defense-mode-drills" class="btn btn-primary" style="padding:6px 14px; font-size:0.85rem; font-weight:700;">
-            🎯 Defense Scenario Drills (防守實戰測驗)
-          </button>
-          <button id="btn-defense-mode-theory" class="btn btn-secondary" style="padding:6px 14px; font-size:0.85rem;">
-            📚 Defensive Theory Masterclass (防守理論大師庫)
-          </button>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <!-- Language Toggle Switcher -->
+          <div style="display:flex; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:3px; gap:4px;">
+            <button id="btn-defense-lang-en" class="btn btn-primary" style="padding:5px 12px; font-size:0.8rem; font-weight:700;">
+              🇺🇸 English
+            </button>
+            <button id="btn-defense-lang-zh" class="btn btn-secondary" style="padding:5px 12px; font-size:0.8rem;">
+              🇭🇰 中文
+            </button>
+          </div>
+          <!-- Mode Switcher Buttons -->
+          <div style="display:flex; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:3px; gap:4px;">
+            <button id="btn-defense-mode-drills" class="btn btn-primary" style="padding:6px 14px; font-size:0.85rem; font-weight:700;">
+              🎯 Defense Scenario Drills
+            </button>
+            <button id="btn-defense-mode-theory" class="btn btn-secondary" style="padding:6px 14px; font-size:0.85rem;">
+              📚 Defensive Theory Masterclass
+            </button>
+          </div>
         </div>
       </div>
 
@@ -841,12 +853,12 @@
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:12px 16px; margin-bottom:16px;">
           <!-- Scenario Filter Buttons -->
           <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-            <span style="font-size:0.8rem; color:var(--accent-gold); font-weight:700; margin-right:4px;">Scenario Type (情境):</span>
-            <button class="btn btn-secondary btn-defense-scenario active" data-type="betaori" style="padding:4px 12px; font-size:0.75rem;">
-              🛡️ Full Betaori Safe Discard (完全棄和找熟牌)
+            <span id="defense-scenario-label" style="font-size:0.8rem; color:var(--accent-gold); font-weight:700; margin-right:4px;">Scenario Type:</span>
+            <button class="btn btn-secondary btn-defense-scenario active" data-type="betaori" id="btn-defense-scenario-betaori" style="padding:4px 12px; font-size:0.75rem;">
+              🛡️ Full Betaori Safe Discard
             </button>
-            <button class="btn btn-secondary btn-defense-scenario" data-type="push_fold" style="padding:4px 12px; font-size:0.75rem;">
-              ⚖️ Push vs Fold Turning Point (攻守轉折點抉擇)
+            <button class="btn btn-secondary btn-defense-scenario" data-type="push_fold" id="btn-defense-scenario-pushfold" style="padding:4px 12px; font-size:0.75rem;">
+              ⚖️ Push vs Fold Decision
             </button>
           </div>
 
@@ -870,34 +882,34 @@
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
               <span id="defense-threat-badge" class="badge" style="background:#dc2626; color:#fff; font-weight:700; font-size:0.85rem; padding:4px 10px;">
-                ⚠️ Threat Level: CRITICAL (極高威脅)
+                ⚠️ Threat Level: CRITICAL
               </span>
               <span id="defense-suspected-fan-badge" class="badge" style="background:var(--c-ruby-ring); color:#fff; font-size:0.85rem;">
-                大牌預警: 4+ 番
+                Estimated: 4+ Fan
               </span>
               <span id="defense-target-player-badge" class="badge" style="background:var(--c-blue-diamond); color:#fff; font-size:0.85rem;">
-                Target: Master Chan (東家)
+                Target: Master Chan (East)
               </span>
             </div>
 
             <button id="btn-defense-next-puzzle" class="btn btn-secondary" style="font-size:0.8rem; padding:4px 12px;">
-              🔄 換一題 (Next Scenario)
+              🔄 Next Scenario
             </button>
           </div>
 
           <!-- Opponent Exposed Melds & River Rack -->
           <div style="background:rgba(0,0,0,0.35); border-radius:8px; padding:12px 16px; margin-bottom:16px;">
-            <div style="font-size:0.82rem; color:var(--accent-gold); font-weight:700; text-transform:uppercase; margin-bottom:6px;">
-              Opponent's Exposed Melds & Table Discards (對手副露與牌河):
+            <div id="defense-opp-header" style="font-size:0.82rem; color:var(--accent-gold); font-weight:700; text-transform:uppercase; margin-bottom:6px;">
+              Opponent's Exposed Melds & Table Discards:
             </div>
             <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
               <div style="display:flex; align-items:center; gap:6px;">
-                <span style="font-size:0.8rem; color:#9ca3af;">副露 (Melds):</span>
+                <span id="defense-melds-label" style="font-size:0.8rem; color:#9ca3af;">Melds:</span>
                 <div id="defense-opp-melds-rack" style="display:flex; gap:8px;"></div>
               </div>
             </div>
             <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-              <span style="font-size:0.8rem; color:#9ca3af;">牌河 (River):</span>
+              <span id="defense-river-label" style="font-size:0.8rem; color:#9ca3af;">River:</span>
               <div id="defense-opp-river-rack" style="display:flex; gap:4px; flex-wrap:wrap;"></div>
             </div>
             <div id="defense-threat-narrative" style="font-size:0.85rem; color:#e5e7eb; margin-top:8px; border-top:1px dashed rgba(255,255,255,0.1); padding-top:6px;"></div>
@@ -906,7 +918,7 @@
           <!-- User Hand Rack -->
           <div style="margin-bottom:18px;">
             <div id="defense-hand-prompt" style="font-size:0.95rem; font-weight:700; color:#fff; margin-bottom:8px;">
-              Your 14-Tile Hand — Click on your defensive discard (點選你手中最安全的防守捨牌):
+              Your 14-Tile Hand — Click on your safest defensive discard:
             </div>
             <div id="defense-user-hand-rack" style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; background:rgba(0,0,0,0.4); padding:12px 16px; border-radius:10px; min-height:80px; justify-content:center;">
               <!-- Populated dynamically -->
@@ -915,21 +927,21 @@
 
           <!-- Push/Fold Action Buttons (Visible for Push/Fold scenario) -->
           <div id="defense-push-fold-actions" style="display:none; justify-content:center; gap:12px; margin-bottom:16px;">
-            <button class="btn btn-secondary btn-pf-choice" data-choice="PUSH" style="padding:10px 20px; font-weight:700; border-color:#34d399; color:#34d399;">
-              ⚔️ PUSH (進攻 / 押牌)
+            <button class="btn btn-secondary btn-pf-choice" data-choice="PUSH" id="btn-pf-push" style="padding:10px 20px; font-weight:700; border-color:#34d399; color:#34d399;">
+              ⚔️ PUSH (Attack)
             </button>
-            <button class="btn btn-secondary btn-pf-choice" data-choice="MAWASHI" style="padding:10px 20px; font-weight:700; border-color:#38bdf8; color:#38bdf8;">
-              ⚖️ MAWASHI (兜牌 / 安全牌效兼顧)
+            <button class="btn btn-secondary btn-pf-choice" data-choice="MAWASHI" id="btn-pf-mawashi" style="padding:10px 20px; font-weight:700; border-color:#38bdf8; color:#38bdf8;">
+              ⚖️ MAWASHI (Weaving)
             </button>
-            <button class="btn btn-secondary btn-pf-choice" data-choice="FOLD" style="padding:10px 20px; font-weight:700; border-color:#ef4444; color:#fca5a5;">
-              🛡️ FOLD (完全棄和 / Betaori)
+            <button class="btn btn-secondary btn-pf-choice" data-choice="FOLD" id="btn-pf-fold" style="padding:10px 20px; font-weight:700; border-color:#ef4444; color:#fca5a5;">
+              🛡️ FOLD (Betaori)
             </button>
           </div>
 
           <!-- Submit Button -->
           <div style="display:flex; justify-content:center;">
             <button id="btn-defense-submit" class="btn btn-primary" style="padding:10px 32px; font-size:1rem; font-weight:700;">
-              🎯 驗證防守決策 (Confirm Defensive Decision)
+              🎯 Confirm Defensive Decision
             </button>
           </div>
         </div>
@@ -942,15 +954,15 @@
 
           <!-- Full Tile Safety Heatmap Ranking Table -->
           <div id="defense-heatmap-container" style="margin-bottom:16px;">
-            <div style="font-size:0.85rem; color:var(--accent-gold); font-weight:700; text-transform:uppercase; margin-bottom:8px;">
-              📊 Hand Tile Danger Ranking Heatmap (手中牌張危險度天梯表):
+            <div id="defense-heatmap-header" style="font-size:0.85rem; color:var(--accent-gold); font-weight:700; text-transform:uppercase; margin-bottom:8px;">
+              📊 Hand Tile Danger Ranking Heatmap (Safest → Most Dangerous):
             </div>
             <div id="defense-heatmap-table" style="display:flex; flex-direction:column; gap:6px;"></div>
           </div>
 
           <div style="display:flex; justify-content:center;">
             <button id="btn-defense-next-after-result" class="btn btn-primary" style="padding:10px 28px; font-size:1rem;">
-              Next Scenario ➡️ (進入下一情境)
+              Next Scenario ➡️
             </button>
           </div>
         </div>
@@ -958,58 +970,8 @@
 
       <!-- PANE 2: DEFENSIVE THEORY MASTERCLASS -->
       <div id="defense-pane-theory" style="display:none;">
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:16px; margin-bottom:20px;">
-          <!-- Card 1: Genbutsu & Dead Tiles -->
-          <div class="rules-card">
-            <h3 style="color:var(--accent-emerald); display:flex; align-items:center; gap:8px;">
-              <span>🀄</span> 1. 跟打熟牌與現物 (Genbutsu)
-            </h3>
-            <p style="font-size:0.88rem; color:#cbd5e1; line-height:1.6; margin-top:8px;">
-              <strong>現物（跟打熟牌）：</strong>對手牌河中已經打過的牌，向其出銃率為 0%。<br/>
-              <strong>三見/四見字牌：</strong>牌桌上已見 3 張或 4 張的字牌（東南西北中發白），絕不可能成刻或成對，防守安全性高達 95%~100%！<br/>
-              <strong>生張字牌（極度危險）：</strong>若對手已亮混一色或兩副露，絕不可輕出 0 見的生張中發白或門風！
-            </p>
-          </div>
-
-          <!-- Card 2: Suji Theory -->
-          <div class="rules-card">
-            <h3 style="color:var(--c-blue-diamond); display:flex; align-items:center; gap:8px;">
-              <span>📏</span> 2. 筋牌防守法則 (Suji 1-4-7 / 2-5-8 / 3-6-9)
-            </h3>
-            <p style="font-size:0.88rem; color:#cbd5e1; line-height:1.6; margin-top:8px;">
-              <strong>表筋（外筋）：</strong>若對手打過 4，則 1 與 7 不會被 23 或 56 的兩面順子聽牌！<br/>
-              • 打過 4 萬 $\to$ 1 萬、7 萬相對安全。<br/>
-              • 打過 5 筒 $\to$ 2 筒、8 筒相對安全。<br/>
-              • 打過 6 索 $\to$ 3 索、9 索相對安全。<br/>
-              <strong>雙筋：</strong>若 1 與 7 皆已打出，中張 4 為雙筋，安全性大幅提升。
-            </p>
-          </div>
-
-          <!-- Card 3: Kabe & Wall Theory -->
-          <div class="rules-card">
-            <h3 style="color:var(--accent-gold); display:flex; align-items:center; gap:8px;">
-              <span>🧱</span> 3. 壁牌與斷門理論 (Kabe / No-Chance)
-            </h3>
-            <p style="font-size:0.88rem; color:#cbd5e1; line-height:1.6; margin-top:8px;">
-              <strong>No-Chance（斷牌）：</strong>若某張牌在牌桌上已見 4 張（如四張 7 筒全現），則對手不可能持有 78 聽 69 或 67 聽 58！<br/>
-              • 斷 7 筒 $\implies$ 8 筒、9 筒為無筋安全牌。<br/>
-              • 斷 3 萬 $\implies$ 1 萬、2 萬極度安全。<br/>
-              <strong>One-Chance：</strong>已見 3 張，危險度減半。
-            </p>
-          </div>
-
-          <!-- Card 4: TVB Push/Fold Decision Tree -->
-          <div class="rules-card">
-            <h3 style="color:var(--c-ruby-ring); display:flex; align-items:center; gap:8px;">
-              <span>⚖️</span> 4. TVB 全銃制攻守轉折點 (Push / Fold)
-            </h3>
-            <p style="font-size:0.88rem; color:#cbd5e1; line-height:1.6; margin-top:8px;">
-              <strong>全銃制原則：</strong>TVB 大賽放銃者需全額承擔失分（$-10\times\text{番數}$）。<br/>
-              • <strong>進攻（Push）：</strong>手牌已聽牌（0向聽）且有 3+ 番價值。<br/>
-              • <strong>兜牌（Mawashi）：</strong>一向聽大牌，只出安全牌或筋牌保留進張。<br/>
-              • <strong>完全棄和（Betaori）：</strong>二向聽以上，對手已開兩副露或大牌，100% 跟打熟牌！
-            </p>
-          </div>
+        <div id="defense-theory-container" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:16px; margin-bottom:20px;">
+          <!-- Rendered dynamically in selected language -->
         </div>
       </div>
     </section>
