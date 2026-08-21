@@ -374,6 +374,7 @@
       this.loadDrillStats();
       this.loadQuizStats();
       this.loadDefenseStats();
+      this.loadBotSettings();
     },
     loadTrainerStats() {
       try {
@@ -450,6 +451,34 @@
           defenseStreak, defenseBestStreak, defenseCorrectCount, defenseTotalCount, defenseLanguage
         }));
       } catch (e) {}
+    },
+    loadBotSettings() {
+      try {
+        const data = JSON.parse(localStorage.getItem('hkm_bot_settings') || '{}');
+        if (data.botShotClockDuration !== undefined) {
+          botShotClockDuration = data.botShotClockDuration;
+          const sel = document.getElementById('select-bot-shot-clock');
+          if (sel) sel.value = String(botShotClockDuration);
+        }
+        if (data.botSpeedMs !== undefined) {
+          botSpeedMs = data.botSpeedMs;
+          document.querySelectorAll('.btn-bot-speed').forEach(b => {
+            if (parseInt(b.dataset.speed, 10) === botSpeedMs) {
+              b.classList.add('active');
+            } else {
+              b.classList.remove('active');
+            }
+          });
+        }
+      } catch (e) {}
+    },
+    saveBotSettings() {
+      try {
+        localStorage.setItem('hkm_bot_settings', JSON.stringify({
+          botShotClockDuration,
+          botSpeedMs
+        }));
+      } catch (e) {}
     }
   };
 
@@ -468,6 +497,10 @@
     if (clockEl) shotClockDuration = parseInt(clockEl.value, 10) || 0;
     const catEl = document.getElementById('select-trainer-category');
     if (catEl) trainerCategory = catEl.value || 'all';
+    const botClockEl = document.getElementById('select-bot-shot-clock');
+    if (botClockEl && botShotClockDuration !== undefined) {
+      botClockEl.value = String(botShotClockDuration);
+    }
 
     const hint = document.getElementById('trainer-mode-hint');
     if (hint) {
@@ -2777,10 +2810,99 @@
   let autoStepTimer = null;
   let currentClaimPrompt = null;
   let isBotListenersInitialized = false;
+  let currentBotGameState = null;
+
+  let botShotClockTimer = null;
+  let botShotClockRemaining = 0;
+
+  function startBotShotClock(duration) {
+    stopBotShotClock();
+    if (!duration || duration <= 0) {
+      const bar = document.getElementById('bot-shot-clock-bar-container');
+      if (bar) bar.style.display = 'none';
+      return;
+    }
+
+    botShotClockRemaining = duration;
+    const bar = document.getElementById('bot-shot-clock-bar-container');
+    const numEl = document.getElementById('bot-shot-clock-num');
+    const progEl = document.getElementById('bot-shot-clock-progress');
+    const statusEl = document.getElementById('bot-shot-clock-status');
+
+    if (bar) bar.style.display = 'block';
+    if (numEl) numEl.textContent = botShotClockRemaining;
+    if (statusEl) statusEl.textContent = 'Your turn — select a discard before the buzzer!';
+    if (progEl) {
+      progEl.style.width = '100%';
+      progEl.style.background = 'var(--accent-emerald)';
+    }
+
+    botShotClockTimer = setInterval(() => {
+      botShotClockRemaining--;
+      if (numEl) numEl.textContent = botShotClockRemaining;
+      if (progEl) {
+        const pct = Math.max(0, (botShotClockRemaining / duration) * 100);
+        progEl.style.width = `${pct}%`;
+        if (botShotClockRemaining <= 3) {
+          progEl.style.background = 'var(--accent-coral)';
+          sound.playWarning();
+        } else if (botShotClockRemaining <= 5) {
+          progEl.style.background = 'var(--accent-gold)';
+        }
+      }
+
+      if (botShotClockRemaining <= 0) {
+        stopBotShotClock(true);
+        handleBotUserTimeout();
+      }
+    }, 1000);
+  }
+
+  function stopBotShotClock(hide = false) {
+    if (botShotClockTimer) {
+      clearInterval(botShotClockTimer);
+      botShotClockTimer = null;
+    }
+    if (hide) {
+      const bar = document.getElementById('bot-shot-clock-bar-container');
+      if (bar) bar.style.display = 'none';
+    }
+  }
+
+  function handleBotUserTimeout() {
+    if (!botGameId || !currentBotGameState) return;
+    // If waiting for user claim (Chow/Pong/Kong/Win), auto-pass
+    if (currentBotGameState.waiting_for_user_claim) {
+      sendBotClaimAction('PASS');
+      return;
+    }
+    // If waiting for user discard, auto-discard drawn tile or rightmost tile
+    const userTiles = currentBotGameState.players?.[1]?.hand_tiles || [];
+    if (userTiles.length > 0) {
+      const drawn = currentBotGameState.drawn_tile;
+      const discardTile = (drawn && userTiles.includes(drawn)) ? drawn : userTiles[userTiles.length - 1];
+      discardBotUserTile(discardTile);
+    }
+  }
 
   function initBotGameListeners() {
     if (isBotListenersInitialized) return;
     isBotListenersInitialized = true;
+
+    // Shot Clock Dropdown
+    document.getElementById('select-bot-shot-clock')?.addEventListener('change', (e) => {
+      botShotClockDuration = parseInt(e.target.value, 10) || 0;
+      StorageManager.saveBotSettings();
+      if (botShotClockDuration > 0 && currentBotGameState && !currentBotGameState.game_over) {
+        const userTiles = currentBotGameState.players?.[1]?.hand_tiles || [];
+        const isUserTurn = (currentBotGameState.current_turn_index === 1 && (userTiles.length % 3 === 2 || currentBotGameState.waiting_for_user_discard));
+        if (isUserTurn || (currentBotGameState.waiting_for_user_claim && currentClaimPrompt)) {
+          startBotShotClock(botShotClockDuration);
+          return;
+        }
+      }
+      stopBotShotClock(true);
+    });
 
     document.getElementById('btn-restart-bot-game')?.addEventListener('click', () => {
       startBotGame();
@@ -2810,15 +2932,19 @@
     });
 
     document.getElementById('btn-claim-win')?.addEventListener('click', () => {
+      stopBotShotClock(true);
       sendBotClaimAction('WIN');
     });
     document.getElementById('btn-claim-pong')?.addEventListener('click', () => {
+      stopBotShotClock(true);
       sendBotClaimAction('PONG');
     });
     document.getElementById('btn-claim-kong')?.addEventListener('click', () => {
+      stopBotShotClock(true);
       sendBotClaimAction('KONG');
     });
     document.getElementById('btn-claim-chow')?.addEventListener('click', () => {
+      stopBotShotClock(true);
       const prompt = currentClaimPrompt;
       const opts = prompt?.chow_options || [];
       if (opts.length > 0) {
@@ -2828,6 +2954,7 @@
       }
     });
     document.getElementById('btn-claim-pass')?.addEventListener('click', () => {
+      stopBotShotClock(true);
       sendBotClaimAction('PASS');
     });
   }
@@ -2894,6 +3021,7 @@
   async function discardBotUserTile(tile) {
     if (!botGameId || isDiscardInFlight) return;
     isDiscardInFlight = true;
+    stopBotShotClock(true);
     sound.playTileClick();
 
     try {
@@ -2918,6 +3046,7 @@
   async function sendBotClaimAction(action, meld) {
     if (!botGameId || isClaimInFlight) return;
     isClaimInFlight = true;
+    stopBotShotClock(true);
     if (autoStepTimer) clearTimeout(autoStepTimer);
 
     const bar = document.getElementById('bot-claim-actions-bar');
@@ -2941,7 +3070,7 @@
     }
   }
 
-  function scheduleBotAutoStep(delay = 600) {
+  function scheduleBotAutoStep(delay = botSpeedMs) {
     if (autoStepTimer) clearTimeout(autoStepTimer);
     autoStepTimer = setTimeout(() => stepBotTurn(), delay);
   }
@@ -2975,6 +3104,7 @@
 
   function renderBotGameState(state) {
     if (!state || !state.players) return;
+    currentBotGameState = state;
     currentClaimPrompt = state.user_claim_prompt || null;
 
     const roundBadge = document.getElementById('bot-game-round-badge');
@@ -3068,10 +3198,19 @@
     });
 
     const userRack = document.getElementById('bot-user-tiles-rack');
-    if (userRack) {
-      const userTiles = state.players[1]?.hand_tiles || [];
-      const isUserTurn = (state.current_turn_index === 1 && (userTiles.length % 3 === 2 || state.waiting_for_user_discard));
+    const userTiles = state.players[1]?.hand_tiles || [];
+    const isUserTurn = (state.current_turn_index === 1 && (userTiles.length % 3 === 2 || state.waiting_for_user_discard));
 
+    // Shot Clock activation logic for Human Player
+    if (!state.game_over && (isUserTurn || (state.waiting_for_user_claim && currentClaimPrompt))) {
+      if (botShotClockDuration > 0 && !botShotClockTimer) {
+        startBotShotClock(botShotClockDuration);
+      }
+    } else {
+      stopBotShotClock(true);
+    }
+
+    if (userRack) {
       userRack.innerHTML = userTiles.map((t, idx) => {
         const isDrawn = ((userTiles.length % 3 === 2) && state.current_turn_index === 1 && (state.drawn_tile ? (t === state.drawn_tile && idx === userTiles.lastIndexOf(t)) : idx === userTiles.length - 1));
         return `
@@ -3235,7 +3374,7 @@
 
     // Auto-advance bot turns if not waiting for human input and match is active
     if (!state.game_over && !state.waiting_for_user_claim && !state.waiting_for_user_discard) {
-      scheduleBotAutoStep(600);
+      scheduleBotAutoStep(botSpeedMs);
     }
   }
 
