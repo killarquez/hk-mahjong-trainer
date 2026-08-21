@@ -353,11 +353,99 @@
   let autoAdvanceOnWin = true;
   let autoAdvanceTimer = null;
 
+  // =========================================================================
+  // LocalStorage Persistence Manager (100% Client-Side, Zero Server Overhead)
+  // =========================================================================
+  const StorageManager = {
+    loadAll() {
+      this.loadTrainerStats();
+      this.loadDrillStats();
+      this.loadQuizStats();
+      this.loadDefenseStats();
+    },
+    loadTrainerStats() {
+      try {
+        const data = JSON.parse(localStorage.getItem('hkm_trainer_stats') || '{}');
+        totalMoves = data.totalMoves || 0;
+        correctMoves = data.correctMoves || 0;
+        currentStreak = data.currentStreak || 0;
+        this.renderTrainerStats();
+      } catch (e) {}
+    },
+    saveTrainerStats() {
+      try {
+        localStorage.setItem('hkm_trainer_stats', JSON.stringify({
+          totalMoves, correctMoves, currentStreak
+        }));
+      } catch (e) {}
+    },
+    renderTrainerStats() {
+      const acc = totalMoves > 0 ? Math.round((correctMoves / totalMoves) * 100) : 100;
+      const accEl = document.getElementById('stat-accuracy');
+      if (accEl) accEl.textContent = `${acc}%`;
+      const streakEl = document.getElementById('stat-streak');
+      if (streakEl) streakEl.textContent = `${currentStreak} 🔥`;
+      const totalEl = document.getElementById('stat-total-moves');
+      if (totalEl) totalEl.textContent = `${totalMoves}`;
+    },
+    loadDrillStats() {
+      try {
+        const data = JSON.parse(localStorage.getItem('hkm_drill_stats') || '{}');
+        drillStreak = data.drillStreak || 0;
+        drillCorrect = data.drillCorrect || 0;
+        drillTotal = data.drillTotal || 0;
+        const solved = JSON.parse(localStorage.getItem('hkm_solved_puzzles') || '[]');
+        solvedPuzzles = new Set(solved);
+      } catch (e) {}
+    },
+    saveDrillStats() {
+      try {
+        localStorage.setItem('hkm_drill_stats', JSON.stringify({
+          drillStreak, drillCorrect, drillTotal
+        }));
+        localStorage.setItem('hkm_solved_puzzles', JSON.stringify([...solvedPuzzles]));
+      } catch (e) {}
+    },
+    loadQuizStats() {
+      try {
+        const data = JSON.parse(localStorage.getItem('hkm_quiz_stats') || '{}');
+        quizStreak = data.quizStreak || 0;
+        quizBestStreak = data.quizBestStreak || 0;
+        quizCorrectCount = data.quizCorrectCount || 0;
+        quizTotalAnswered = data.quizTotalAnswered || 0;
+      } catch (e) {}
+    },
+    saveQuizStats() {
+      try {
+        localStorage.setItem('hkm_quiz_stats', JSON.stringify({
+          quizStreak, quizBestStreak, quizCorrectCount, quizTotalAnswered
+        }));
+      } catch (e) {}
+    },
+    loadDefenseStats() {
+      try {
+        const data = JSON.parse(localStorage.getItem('hkm_defense_stats') || '{}');
+        defenseStreak = data.defenseStreak || 0;
+        defenseBestStreak = data.defenseBestStreak || 0;
+        defenseCorrectCount = data.defenseCorrectCount || 0;
+        defenseTotalCount = data.defenseTotalCount || 0;
+      } catch (e) {}
+    },
+    saveDefenseStats() {
+      try {
+        localStorage.setItem('hkm_defense_stats', JSON.stringify({
+          defenseStreak, defenseBestStreak, defenseCorrectCount, defenseTotalCount
+        }));
+      } catch (e) {}
+    }
+  };
+
   document.addEventListener('DOMContentLoaded', () => {
     initApp();
   });
 
   function initApp() {
+    StorageManager.loadAll();
     setupDOM();
     bindEvents();
     initPuzzles();
@@ -1035,6 +1123,7 @@
     const solvedCount = solvedPuzzles.size;
     const statEl = document.getElementById('stat-puzzles-solved');
     if (statEl) statEl.textContent = `${solvedCount}/${puzzles.length} ⭐`;
+    StorageManager.saveDrillStats();
   }
 
   function updateDrillStats() {
@@ -1046,6 +1135,7 @@
       const pct = drillTotal > 0 ? Math.round((drillCorrect / drillTotal) * 100) : 0;
       scoreEl.textContent = `${drillCorrect}/${drillTotal} (${pct}%)`;
     }
+    StorageManager.saveDrillStats();
   }
 
   function renderPuzzleCatalog() {
@@ -1487,6 +1577,8 @@
 
     const totalEl = document.getElementById('stat-total-moves');
     if (totalEl) totalEl.textContent = `${totalMoves}`;
+
+    StorageManager.saveTrainerStats();
   }
 
   function addTileToCustomBuilder(code) {
@@ -2870,6 +2962,15 @@
       calculateCurrentFan();
     });
 
+    const streakEl = document.getElementById('fan-quiz-streak');
+    const bestEl = document.getElementById('fan-quiz-best');
+    const accEl = document.getElementById('fan-quiz-acc');
+    const fracEl = document.getElementById('fan-quiz-score-fraction');
+    if (streakEl) streakEl.textContent = quizStreak.toString();
+    if (bestEl) bestEl.textContent = quizBestStreak.toString();
+    if (accEl) accEl.textContent = quizTotalAnswered > 0 ? `${Math.round((quizCorrectCount / quizTotalAnswered) * 100)}%` : '0%';
+    if (fracEl) fracEl.textContent = `${quizCorrectCount}/${quizTotalAnswered}`;
+
     loadNewFanQuizPuzzle();
   }
 
@@ -3038,6 +3139,8 @@
       if (bestEl) bestEl.textContent = quizBestStreak.toString();
       if (accEl) accEl.textContent = `${Math.round((quizCorrectCount / quizTotalAnswered) * 100)}%`;
       if (fracEl) fracEl.textContent = `${quizCorrectCount}/${quizTotalAnswered}`;
+
+      StorageManager.saveQuizStats();
 
       const fbCard = document.getElementById('quiz-feedback-card');
       const resHeader = document.getElementById('quiz-result-header');
@@ -3219,10 +3322,14 @@
       sound.playTileClick();
       loadNewDefensePuzzle();
     });
-    document.getElementById('btn-defense-next-after-result')?.addEventListener('click', () => {
-      sound.playTileClick();
-      loadNewDefensePuzzle();
-    });
+    const streakEl = document.getElementById('defense-drill-streak');
+    const bestEl = document.getElementById('defense-drill-best');
+    const accEl = document.getElementById('defense-drill-acc');
+    const fracEl = document.getElementById('defense-drill-score-fraction');
+    if (streakEl) streakEl.textContent = defenseStreak.toString();
+    if (bestEl) bestEl.textContent = defenseBestStreak.toString();
+    if (accEl) accEl.textContent = defenseTotalCount > 0 ? `${Math.round((defenseCorrectCount / defenseTotalCount) * 100)}%` : '0%';
+    if (fracEl) fracEl.textContent = `${defenseCorrectCount}/${defenseTotalCount}`;
 
     loadNewDefensePuzzle();
   }
@@ -3368,6 +3475,8 @@
       if (bestEl) bestEl.textContent = defenseBestStreak.toString();
       if (accEl) accEl.textContent = `${Math.round((defenseCorrectCount / defenseTotalCount) * 100)}%`;
       if (fracEl) fracEl.textContent = `${defenseCorrectCount}/${defenseTotalCount}`;
+
+      StorageManager.saveDefenseStats();
 
       const fbCard = document.getElementById('defense-feedback-card');
       const resHeader = document.getElementById('defense-result-header');
