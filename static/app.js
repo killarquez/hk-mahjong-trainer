@@ -2545,7 +2545,11 @@
   }
 
   async function discardBotUserTile(tile) {
-    if (!botGameId || isBotProcessing) return;
+    if (!botGameId) return;
+    if (isBotProcessing) {
+      setTimeout(() => discardBotUserTile(tile), 200);
+      return;
+    }
     isBotProcessing = true;
     sound.playTileClick();
 
@@ -2562,20 +2566,20 @@
       }
       const data = await res.json();
       renderBotGameState(data);
-      isBotProcessing = false;
-
-      if (!data.game_over && !data.waiting_for_user_claim && !data.waiting_for_user_discard) {
-        scheduleBotAutoStep();
-      }
     } catch (err) {
-      isBotProcessing = false;
       alert(`Discard error: ${err.message}`);
+    } finally {
+      isBotProcessing = false;
     }
   }
 
   async function sendBotClaimAction(action, meld) {
     if (!botGameId) return;
     if (autoStepTimer) clearTimeout(autoStepTimer);
+    if (isBotProcessing) {
+      setTimeout(() => sendBotClaimAction(action, meld), 200);
+      return;
+    }
     isBotProcessing = true;
 
     const bar = document.getElementById('bot-claim-actions-bar');
@@ -2593,24 +2597,24 @@
       }
       const data = await res.json();
       renderBotGameState(data);
-      isBotProcessing = false;
-
-      if (!data.game_over && !data.waiting_for_user_claim && !data.waiting_for_user_discard) {
-        scheduleBotAutoStep();
-      }
     } catch (err) {
-      isBotProcessing = false;
       alert(`Claim error: ${err.message}`);
+    } finally {
+      isBotProcessing = false;
     }
   }
 
-  function scheduleBotAutoStep() {
+  function scheduleBotAutoStep(delay = 600) {
     if (autoStepTimer) clearTimeout(autoStepTimer);
-    autoStepTimer = setTimeout(() => stepBotTurn(), 600);
+    autoStepTimer = setTimeout(() => stepBotTurn(), delay);
   }
 
   async function stepBotTurn() {
-    if (!botGameId || isBotProcessing) return;
+    if (!botGameId) return;
+    if (isBotProcessing) {
+      scheduleBotAutoStep(200);
+      return;
+    }
     isBotProcessing = true;
 
     try {
@@ -2626,14 +2630,10 @@
       const data = await res.json();
       renderBotGameState(data);
       sound.playTileClick();
-      isBotProcessing = false;
-
-      if (!data.game_over && !data.waiting_for_user_claim && !data.waiting_for_user_discard) {
-        scheduleBotAutoStep();
-      }
     } catch (err) {
-      isBotProcessing = false;
       console.error('Bot turn step error:', err);
+    } finally {
+      isBotProcessing = false;
     }
   }
 
@@ -2894,6 +2894,11 @@
           sound.playWarning();
         }
       }
+    }
+
+    // Auto-advance bot turns if not waiting for human input and match is active
+    if (!state.game_over && !state.waiting_for_user_claim && !state.waiting_for_user_discard) {
+      scheduleBotAutoStep(600);
     }
   }
 
