@@ -2459,11 +2459,17 @@
   // =========================================================================
   let botGameId = null;
   let isBotProcessing = false;
+  let isClaimInFlight = false;
+  let isDiscardInFlight = false;
   let isBotHudVisible = true;
   let autoStepTimer = null;
   let currentClaimPrompt = null;
+  let isBotListenersInitialized = false;
 
   function initBotGameListeners() {
+    if (isBotListenersInitialized) return;
+    isBotListenersInitialized = true;
+
     document.getElementById('btn-restart-bot-game')?.addEventListener('click', () => {
       startBotGame();
     });
@@ -2555,12 +2561,8 @@
   }
 
   async function discardBotUserTile(tile) {
-    if (!botGameId) return;
-    if (isBotProcessing) {
-      setTimeout(() => discardBotUserTile(tile), 200);
-      return;
-    }
-    isBotProcessing = true;
+    if (!botGameId || isDiscardInFlight) return;
+    isDiscardInFlight = true;
     sound.playTileClick();
 
     try {
@@ -2579,18 +2581,14 @@
     } catch (err) {
       alert(`Discard error: ${err.message}`);
     } finally {
-      isBotProcessing = false;
+      isDiscardInFlight = false;
     }
   }
 
   async function sendBotClaimAction(action, meld) {
-    if (!botGameId) return;
+    if (!botGameId || isClaimInFlight) return;
+    isClaimInFlight = true;
     if (autoStepTimer) clearTimeout(autoStepTimer);
-    if (isBotProcessing) {
-      setTimeout(() => sendBotClaimAction(action, meld), 200);
-      return;
-    }
-    isBotProcessing = true;
 
     const bar = document.getElementById('bot-claim-actions-bar');
     if (bar) bar.style.display = 'none';
@@ -2610,7 +2608,7 @@
     } catch (err) {
       alert(`Claim error: ${err.message}`);
     } finally {
-      isBotProcessing = false;
+      isClaimInFlight = false;
     }
   }
 
@@ -3838,17 +3836,6 @@
       }
     });
   });
-
-  initBotGameListeners();
-
-  // Initialize Rules Center on load
-  initRulesCenter();
-
-  // Initialize Fan Quiz Trainer on load
-  initFanQuizTrainer();
-
-  // Initialize Defense Center on load
-  initDefenseCenter();
 })();
 
 
