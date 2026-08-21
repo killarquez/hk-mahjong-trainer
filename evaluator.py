@@ -46,7 +46,8 @@ def evaluate_14_hand(
     prevailing_wind: str = "1z",
     visible_discards: Optional[List[str]] = None,
     visible_counts: Optional[List[int]] = None,
-    allowed_discards: Optional[List[str]] = None
+    allowed_discards: Optional[List[str]] = None,
+    open_melds: Optional[List[Dict[str, Any]]] = None
 ) -> Dict[str, Any]:
     """
     Evaluates all possible discards for a 14-tile hand.
@@ -83,7 +84,8 @@ def evaluate_14_hand(
             tiles=hand_tiles,
             is_self_draw=True,
             prevailing_wind=prevailing_wind,
-            seat_wind=seat_wind
+            seat_wind=seat_wind,
+            open_melds=open_melds
         )
 
     discard_results = []
@@ -99,7 +101,8 @@ def evaluate_14_hand(
             counts, 
             seat_wind, 
             prevailing_wind, 
-            visible_counts=full_vis_counts
+            visible_counts=full_vis_counts,
+            open_melds=open_melds
         )
         shanten = ukeire_res["shanten"]
         outs = ukeire_res["total_outs"]

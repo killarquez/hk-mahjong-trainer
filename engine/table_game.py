@@ -176,7 +176,8 @@ class TableMatchGame:
                     winning_tile=discarded_tile,
                     is_self_draw=False,
                     prevailing_wind=self.prevailing_wind,
-                    seat_wind=self.seat_winds[user_idx]
+                    seat_wind=self.seat_winds[user_idx],
+                    open_melds=self.melds[user_idx]
                 )
                 if fan_res.get("is_valid_win") and fan_res.get("total_fan", 0) >= 1:
                     can_win = True
@@ -356,7 +357,8 @@ class TableMatchGame:
                         winning_tile=drawn or self.hands[curr_idx][-1],
                         is_self_draw=True,
                         prevailing_wind=self.prevailing_wind,
-                        seat_wind=self.seat_winds[curr_idx]
+                        seat_wind=self.seat_winds[curr_idx],
+                        open_melds=self.melds[curr_idx]
                     )
                     if fan_res.get("is_valid_win") and fan_res.get("total_fan", 0) >= 1:
                         can_win = True
@@ -635,7 +637,8 @@ class TableMatchGame:
                         winning_tile=drawn or self.hands[user_idx][-1],
                         is_self_draw=True,
                         prevailing_wind=self.prevailing_wind,
-                        seat_wind=self.seat_winds[user_idx]
+                        seat_wind=self.seat_winds[user_idx],
+                        open_melds=self.melds[user_idx]
                     )
                     if fan_res.get("is_valid_win") and fan_res.get("total_fan", 0) >= 1:
                         user_self_draw_claim = {
@@ -729,7 +732,8 @@ class TableMatchGame:
             winning_tile=winning_tile,
             is_self_draw=is_self_draw,
             prevailing_wind=self.prevailing_wind,
-            seat_wind=winner_seat
+            seat_wind=winner_seat,
+            open_melds=self.melds[winner_idx]
         )
 
         total_fan = min(10, max(1, fan_res["total_fan"]))
@@ -814,7 +818,8 @@ class TableMatchGame:
                     seat_wind=self.seat_winds[1],
                     prevailing_wind=self.prevailing_wind,
                     visible_discards=vis_discards,
-                    allowed_discards=self.hands[1]
+                    allowed_discards=self.hands[1],
+                    open_melds=self.melds[1]
                 )
             except Exception:
                 pass
@@ -825,7 +830,8 @@ class TableMatchGame:
                     u_counts,
                     seat_wind=self.seat_winds[1],
                     prevailing_wind=self.prevailing_wind,
-                    visible_counts=hand_to_counts(full_user_tiles + vis_discards)
+                    visible_counts=hand_to_counts(full_user_tiles + vis_discards),
+                    open_melds=self.melds[1]
                 )
             except Exception:
                 pass

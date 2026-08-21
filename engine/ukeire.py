@@ -21,16 +21,19 @@ from engine.tiles import (
     sort_tiles
 )
 from engine.shanten import calculate_tvb_shanten
+from fan_calculator import calculate_fan
 
 def calculate_ukeire_for_13(
     counts: List[int],
     seat_wind: str = "1z",
     prevailing_wind: str = "1z",
-    visible_counts: Optional[List[int]] = None
+    visible_counts: Optional[List[int]] = None,
+    open_melds: Optional[List[Dict[str, Any]]] = None
 ) -> Dict[str, Any]:
     """
     Evaluates Ukeire (Tile Acceptance) for a 13-tile hand.
     Accepts optional visible_counts (accounting for river discards + exposed melds + hand).
+    If open_melds is provided, ensures win checks strictly honor fixed open melds.
     Returns:
     - shanten: int
     - total_outs: int
@@ -63,10 +66,24 @@ def calculate_ukeire_for_13(
 
         if current_shanten == 0:
             # Current hand is Tenpai: check if drawing idx wins (Shanten == -1)
-            eval_draw = calculate_tvb_shanten(counts, seat_wind, prevailing_wind)
-            if eval_draw["shanten"] == -1:
-                is_accepted = True
-                res_shanten = -1
+            if open_melds:
+                draw_tiles = counts_to_hand(counts)
+                win_check = calculate_fan(
+                    tiles=sort_tiles(draw_tiles),
+                    winning_tile=INDEX_TILE_MAP[idx],
+                    is_self_draw=True,
+                    prevailing_wind=prevailing_wind,
+                    seat_wind=seat_wind,
+                    open_melds=open_melds
+                )
+                if win_check.get("is_valid_win") and win_check.get("total_fan", 0) >= 1:
+                    is_accepted = True
+                    res_shanten = -1
+            else:
+                eval_draw = calculate_tvb_shanten(counts, seat_wind, prevailing_wind)
+                if eval_draw["shanten"] == -1:
+                    is_accepted = True
+                    res_shanten = -1
         else:
             # Current hand is S-shanten (S > 0): check if discarding any tile achieves S-1
             # We only need to test discarding tiles that exist in hand

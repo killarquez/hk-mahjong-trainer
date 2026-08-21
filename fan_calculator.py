@@ -25,10 +25,12 @@ def calculate_fan(
     winning_tile: Optional[str] = None, 
     is_self_draw: bool = False,
     prevailing_wind: str = "1z",  # Default East (1z)
-    seat_wind: str = "1z"         # Default East (1z)
+    seat_wind: str = "1z",        # Default East (1z)
+    open_melds: Optional[List[Dict[str, Any]]] = None
 ) -> Dict[str, Any]:
     """
     Calculates the Fan value and detailed breakdown of a 14-tile winning hand according to TVB 2026 rules.
+    If open_melds is provided, those melds are fixed and preserved without re-grouping.
     """
     if len(tiles) != 14:
         return {
@@ -42,8 +44,8 @@ def calculate_fan(
     # Count tile occurrences
     counts = Counter(tiles)
     
-    # 1. Thirteen Orphans (十三幺 - 10 Fan Limit)
-    if is_thirteen_orphans(counts):
+    # 1. Thirteen Orphans (十三幺 - 10 Fan Limit) - only valid if fully concealed (0 open melds)
+    if not open_melds and is_thirteen_orphans(counts):
         return build_response(
             is_valid=True,
             total_fan=10,
@@ -53,7 +55,7 @@ def calculate_fan(
         )
 
     # Decompose into standard hand melds (4 melds + 1 pair)
-    decompositions = decompose_hand(tiles)
+    decompositions = decompose_hand(tiles, open_melds=open_melds)
     if not decompositions:
         return {
             "is_valid_win": False,
@@ -230,11 +232,38 @@ def evaluate_decomposition(
     )
 
 
-def decompose_hand(tiles: List[str]) -> List[Tuple[str, List[Tuple[str, List[str]]]]]:
+def decompose_hand(
+    tiles: List[str],
+    open_melds: Optional[List[Dict[str, Any]]] = None
+) -> List[Tuple[str, List[Tuple[str, List[str]]]]]:
     """
-    Decomposes a list of 14 tiles into all possible (pair, melds) combinations.
+    Decomposes a list of tiles into all possible (pair, melds) combinations.
     Each meld is ('chow'|'pong', [t1, t2, t3]).
+    If open_melds is provided, those melds are fixed and preserved,
+    and only the concealed tiles are decomposed into the remaining melds + pair.
     """
+    if open_melds:
+        fixed_melds: List[Tuple[str, List[str]]] = []
+        concealed_tiles = list(tiles)
+        for m in open_melds:
+            m_type = "pong" if m["type"] in ["pong", "kong", "concealed_kong"] else "chow"
+            m_tiles = list(m["tiles"][:3])
+            fixed_melds.append((m_type, m_tiles))
+            for t in m_tiles:
+                if t in concealed_tiles:
+                    concealed_tiles.remove(t)
+
+        counts = Counter(concealed_tiles)
+        results = []
+        for tile in set(concealed_tiles):
+            if counts[tile] >= 2:
+                remaining = counts.copy()
+                remaining[tile] -= 2
+                melds = []
+                if solve_melds(remaining, melds):
+                    results.append((tile, melds + fixed_melds))
+        return results
+
     counts = Counter(tiles)
     results = []
 

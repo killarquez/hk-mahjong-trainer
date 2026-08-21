@@ -214,7 +214,8 @@ class MahjongBotAI:
                     winning_tile=discarded_tile,
                     is_self_draw=False,
                     prevailing_wind=prevailing_wind,
-                    seat_wind=self.seat_wind
+                    seat_wind=self.seat_wind,
+                    open_melds=melds
                 )
                 if fan_res.get("is_valid_win") and fan_res.get("total_fan", 0) >= 1:
                     return {
