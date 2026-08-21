@@ -292,14 +292,28 @@ class TableMatchGame:
 
                     if claim["action"] in ["PONG", "KONG"]:
                         self.execute_bot_pong_or_kong(b_idx, disc_tile, claim["action"])
-                        self.last_discard = None
-                        self.user_passed_last_discard = False
+                        # Check claims on the bot's new discard
+                        if not self.user_passed_last_discard and self.last_discard:
+                            user_claims = self.get_user_claim_options(self.last_discard["tile"], self.last_discard["player_index"])
+                            if user_claims["can_win"] or user_claims["can_pong"] or user_claims["can_kong"] or user_claims["can_chow"]:
+                                return {
+                                    **self.get_state(),
+                                    "user_claim_prompt": user_claims,
+                                    "waiting_for_user_claim": True
+                                }
                         return self.get_state()
 
                     if claim["action"] == "CHOW" and (disc_idx == (b_idx - 1) % 4):
                         self.execute_bot_chow(b_idx, disc_tile, claim["meld"])
-                        self.last_discard = None
-                        self.user_passed_last_discard = False
+                        # Check claims on the bot's new discard
+                        if not self.user_passed_last_discard and self.last_discard:
+                            user_claims = self.get_user_claim_options(self.last_discard["tile"], self.last_discard["player_index"])
+                            if user_claims["can_win"] or user_claims["can_pong"] or user_claims["can_kong"] or user_claims["can_chow"]:
+                                return {
+                                    **self.get_state(),
+                                    "user_claim_prompt": user_claims,
+                                    "waiting_for_user_claim": True
+                                }
                         return self.get_state()
 
             # No claims on last discard
@@ -470,6 +484,17 @@ class TableMatchGame:
         # Bot discards
         chosen_discard = bot_res["tile"]
         self.execute_discard(curr_idx, chosen_discard)
+
+        # Check if Human Player (index 1) has claim available on this discard
+        if not self.user_passed_last_discard:
+            user_claims = self.get_user_claim_options(chosen_discard, curr_idx)
+            if user_claims["can_win"] or user_claims["can_pong"] or user_claims["can_kong"] or user_claims["can_chow"]:
+                return {
+                    **self.get_state(),
+                    "user_claim_prompt": user_claims,
+                    "waiting_for_user_claim": True
+                }
+
         return self.get_state()
 
     def execute_bot_pong_or_kong(self, player_idx: int, tile: str, action: str):
